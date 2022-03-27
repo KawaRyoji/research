@@ -1,5 +1,4 @@
 */__pycache__/
-experiment/*/test.npz
-experiment/*/train.npz
+experiment/
 resource/
 nohup.out
