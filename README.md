@@ -1,7 +1,15 @@
 # 機械学習プログラム
 
-作者: 180441035 川凌司
-更新日: 2022/2/15
+作者: 名城大学情報工学科 坂野研究室 川凌司
+
+更新日: 2022/3/27
+
+## はじめに
+
+このプログラムは自身の研究に用いたものです。
+研究室で機械学習をやる人に向けて公開します。
+自身の研究に合わせて作成している部分があるので、
+他のモデルやデータセットで動作するかは保証できません。
 
 ## 使用方法
 
@@ -25,7 +33,7 @@
             label = load_label(label_path)
 
             datas = some_process_data(data)
-            hotvectors = some_process_label(label) # ラベルは(ワン)ホットベクトルを想定しています
+            hotvectors = some_process_label(label) # ラベルは(ワン or マルチ)ホットベクトルを想定しています
 
             return datas, hotvectors
     
