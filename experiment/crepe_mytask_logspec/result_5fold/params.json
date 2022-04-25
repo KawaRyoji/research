@@ -1,0 +1,1 @@
+{"batch_size": 32, "epochs": 32, "epoch_size": 500, "validation_split": 0.1, "learning_rate": 0.0002, "optimizer": "Adam"}
