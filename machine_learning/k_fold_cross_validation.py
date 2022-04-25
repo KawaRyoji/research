@@ -273,14 +273,14 @@ class k_fold_cross_validation:
         """
         plot.plot_compare_average_history(
             output_dir,
-            *[
+            *list(
                 map(
                     lambda x: os.path.join(
                         x.output_dir, "result_{}fold".format(k), "histories"
                     ),
                     models,
                 ),
-            ],
+            ),
             legend=legend,
             metrics=metrics,
         )
@@ -288,7 +288,7 @@ class k_fold_cross_validation:
     @classmethod
     def box_plot_history_compare(
         cls,
-        output_dir: str,
+        output_path: str,
         k: int,
         *models: Imachine_learning,
         stripplot=False,
@@ -306,15 +306,15 @@ class k_fold_cross_validation:
             - metrics (list, optional): 比較する評価値を指定できます
         """
         plot.box_plot_history_compare(
-            output_dir,
-            *[
+            output_path,
+            *list(
                 map(
                     lambda x: os.path.join(
                         x.output_dir, "result_{}fold".format(k), "test_res.csv"
                     ),
                     models,
                 ),
-            ],
+            ),
             stripplot=stripplot,
             legend=legend,
             metrics=metrics,

@@ -122,6 +122,7 @@ def _kcv(model: k_fold_cross_validation):
 def _box_plot_compare():
     k_fold_cross_validation.box_plot_history_compare(
         "./output/compare_mytask/kcv.png",
+        k,
         mytask_waveform,
         mytask_spec,
         mytask_mel_bins256,
@@ -131,6 +132,7 @@ def _box_plot_compare():
 
     k_fold_cross_validation.box_plot_history_compare(
         "./output/compare_mytask_mel/kcv.png",
+        k,
         mytask_mel_bins128,
         mytask_mel_bins256,
         legend=["128 bins", "256 bins"],
@@ -139,6 +141,7 @@ def _box_plot_compare():
 
     k_fold_cross_validation.box_plot_history_compare(
         "./output/compare_origintask/kcv.png",
+        k,
         origintask_waveform,
         origintask_spec,
         legend=["waveform", "spectrum"],
@@ -147,6 +150,7 @@ def _box_plot_compare():
 
     k_fold_cross_validation.box_plot_history_compare(
         "./output/compare_mytask_spec/kcv.png",
+        k,
         mytask_spec,
         mytask_logspec,
         mytask_mel_bins256,
@@ -156,6 +160,7 @@ def _box_plot_compare():
 
     k_fold_cross_validation.box_plot_history_compare(
         "./output/compare_windowed_spec/kcv.png",
+        k,
         origintask_spec,
         origintask_spec_not_windowed,
         legend=["windowed", "not windowed"],
@@ -164,6 +169,7 @@ def _box_plot_compare():
 
     k_fold_cross_validation.box_plot_history_compare(
         "./output/compare_windowed_waveform/kcv.png",
+        k,
         origintask_waveform,
         origintask_waveform_windowed,
         legend=["not windowed", "windowed"],
@@ -174,6 +180,7 @@ def _box_plot_compare():
 def _plot_avg_compare():
     k_fold_cross_validation.plot_compare_average_history(
         "./output/compare_mytask_spec",
+        k,
         mytask_spec,
         mytask_logspec,
         legend=["linear", "logarithm"],
@@ -182,6 +189,7 @@ def _plot_avg_compare():
 
     k_fold_cross_validation.plot_compare_average_history(
         "./output/compare_mytask",
+        k,
         mytask_waveform,
         mytask_spec,
         mytask_mel_bins256,
@@ -191,6 +199,7 @@ def _plot_avg_compare():
 
     k_fold_cross_validation.plot_compare_average_history(
         "./output/compare_mytask_mel",
+        k,
         mytask_mel_bins128,
         mytask_mel_bins256,
         legend=["128 bins", "256 bins"],
@@ -199,6 +208,7 @@ def _plot_avg_compare():
 
     k_fold_cross_validation.plot_compare_average_history(
         "./output/compare_origintask",
+        k,
         origintask_waveform,
         origintask_spec,
         legend=["waveform", "spectrum"],
@@ -207,6 +217,7 @@ def _plot_avg_compare():
 
     k_fold_cross_validation.plot_compare_average_history(
         "./output/compare_windowed_spec",
+        k,
         origintask_spec,
         origintask_spec_not_windowed,
         legend=["windowed", "not windowed"],
@@ -215,6 +226,7 @@ def _plot_avg_compare():
 
     k_fold_cross_validation.plot_compare_average_history(
         "./output/compare_windowed_waveform",
+        k,
         origintask_waveform,
         origintask_waveform_windowed,
         legend=["not windowed", "windowed"],

@@ -14,3 +14,31 @@ class label_info(Enum):
 
     def header() -> str:
         return "start_time,end_time,instrument,note,start_beat,end_beat,note_value"
+    
+# ソロ楽器の楽曲
+solo_instrumental_train = [
+    2186,
+    2241,
+    2242,
+    2243,
+    2244,
+    2288,
+    2289,
+    2659,
+    2217,
+    2218,
+    2219,
+    2220,
+    2221,
+    2222,
+    2293,
+    2294,
+    2295,
+    2296,
+    2297,
+    2202,
+    2203,
+    2204,
+]
+
+solo_instrumental_test = [2191, 2298]

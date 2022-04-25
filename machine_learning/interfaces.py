@@ -50,6 +50,8 @@ class Imachine_learning(metaclass=ABCMeta):
         """
         ディレクトリパスからインスタンスを生成します
 
+        なお、データとラベルのパスを対応付けるために、データとラベルのパスは名前順でソートされます
+        
         ## Params
             - train_data_dir (str):学習データのディレクトリパス
             - train_labels_dir (str):学習ラベルのディレクトリパス
@@ -60,11 +62,11 @@ class Imachine_learning(metaclass=ABCMeta):
         ## Returns
             - Imachine_learning: インスタンス
         """
-        train_data_paths = dir2paths(train_data_dir)
-        train_labels_paths = dir2paths(train_labels_dir)
-        test_data_paths = dir2paths(test_data_dir)
-        test_labels_paths = dir2paths(test_labels_dir)
-
+        train_data_paths = sorted(dir2paths(train_data_dir))
+        train_labels_paths = sorted(dir2paths(train_labels_dir))
+        test_data_paths = sorted(dir2paths(test_data_dir))
+        test_labels_paths = sorted(dir2paths(test_labels_dir))
+        
         return cls(
             train_data_paths,
             train_labels_paths,
@@ -100,7 +102,7 @@ class Imachine_learning(metaclass=ABCMeta):
         raise NotImplementedError()
 
     def create_train_set(
-        self, limit: int = None, seed: int = None, output_path: str = None, **kwargs
+        self, limit: int = None, seed: int = None, output_path: str = None, normalize=True, **kwargs
     ) -> None:
         """
         学習データセットを作成します\n
@@ -138,11 +140,12 @@ class Imachine_learning(metaclass=ABCMeta):
             self.train_labels_paths,
             output_path,
             self._create_dataset_process,
+            normalize=normalize,
             **kwargs,
         )
 
     def create_test_set(
-        self, limit: int = None, seed: int = None, output_path: str = None, **kwargs
+        self, limit: int = None, seed: int = None, output_path: str = None, normalize=True, **kwargs
     ) -> None:
         """
         テストデータセットを作成します\n
@@ -178,5 +181,6 @@ class Imachine_learning(metaclass=ABCMeta):
             self.test_labels_paths,
             output_path,
             self._create_dataset_process,
+            normalize=normalize,
             **kwargs,
         )
