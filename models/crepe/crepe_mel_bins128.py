@@ -2,10 +2,10 @@ import keras
 from machine_learning.interfaces import Imachine_learning
 from musicnet.musicnet import solo_instrumental_train, solo_instrumental_test
 
-class da_spec(Imachine_learning):
+class crepe_mel_bins128(Imachine_learning):
     def create_model(self) -> keras.Model:
-        import models.DA_Net
-        return models.DA_Net.create_model()
+        from models.crepe import crepe
+        return crepe.create_model(input_size=128, first_stride=1)
 
     def _create_dataset_process(self, data_path: str, label_path: str) -> tuple:
         from scipy.signal.windows.windows import hann
@@ -13,7 +13,10 @@ class da_spec(Imachine_learning):
         import numpy as np
         from audio.wavfile import wavfile
         from musicnet.annotation import dataset_label
-
+        from librosa.filters import mel
+        from models.crepe.crepe import sampling_freq
+        from util.calc import square
+        
         fft_len = 2048  # 分解能 8Hz
         flen = 1024  # 時間長 64ms
         fshift = 256  # 時間長 16ms
@@ -23,8 +26,7 @@ class da_spec(Imachine_learning):
 
         # フレームを中点から始めるための処理
         # librosaのデフォルトに合わせて'reflect'にしている
-        pad = flen // 2
-        waveform = np.pad(waveform, pad, mode="reflect")
+        waveform = np.pad(waveform, flen // 2, mode="reflect")
         window = hann(flen)
 
         nframes = 1 + (len(waveform) - flen) // fshift
@@ -36,10 +38,10 @@ class da_spec(Imachine_learning):
 
             frame = waveform[fstart:fend]
             frame = window * frame
-            frame = np.abs(fft(frame, n=fft_len))
+            frame = square(fft(frame, n=fft_len))
             frame = frame[: fft_len // 2]
 
-            label = labels.frame_mid_pitches(fstart-pad, fend-pad)
+            label = labels.frame_mid_pitches(fstart, fend)
             label = dataset_label.list2hotvector(label)
 
             frames.append(frame)
@@ -47,8 +49,14 @@ class da_spec(Imachine_learning):
 
         frames = np.array(frames, dtype=np.float32)
         hotvectors = np.array(hotvectors, dtype=np.float32)
+        
+        # メル変換
+        filter = mel(sampling_freq, fft_len)
+        filter = filter[:, : fft_len // 2]
+        frames = np.dot(filter, frames.T).T
+        
         return frames, hotvectors
-    
+
     @classmethod
     def from_solo_instrument(cls, output_dir):
         train_data_paths = list(

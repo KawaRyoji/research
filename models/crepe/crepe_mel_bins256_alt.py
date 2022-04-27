@@ -1,8 +1,8 @@
 import keras
 from machine_learning.interfaces import Imachine_learning
+from musicnet.musicnet import solo_instrumental_train, solo_instrumental_test
 
-
-class crepe_mytask_mel_bins128_alt(Imachine_learning):
+class crepe_mel_bins256_alt(Imachine_learning):
     def create_model(self) -> keras.Model:
         from keras.layers import Input, Reshape, Conv2D, BatchNormalization
         from keras.layers import MaxPool2D, Dropout, Permute, Flatten, Dense
@@ -10,7 +10,7 @@ class crepe_mytask_mel_bins128_alt(Imachine_learning):
         from keras.metrics import Precision, BinaryAccuracy, Recall
         from machine_learning.metrics import F1
 
-        input_size = 128
+        input_size = 256
         capacity_multiplier = 32
         layers = [1, 2, 3, 4, 5, 6]
         filters = [n * capacity_multiplier for n in [32, 4, 4, 4, 8, 16]]
@@ -31,7 +31,7 @@ class crepe_mytask_mel_bins128_alt(Imachine_learning):
             y = Conv2D(
                 f, (w, 1), strides=s, padding="same", activation="relu", name="conv%d" % l
             )(y)
-            y = BatchNormalization(name="conv%d-BN" % l)(y)            
+            y = BatchNormalization(name="conv%d-BN" % l)(y)
             y = MaxPool2D(
                 pool_size=(min(y.shape[1], 2), 1), strides=None, padding="valid", name="conv%d-maxpool" % l
             )(y)
@@ -61,7 +61,7 @@ class crepe_mytask_mel_bins128_alt(Imachine_learning):
         from audio.wavfile import wavfile
         from musicnet.annotation import dataset_label
         from librosa.filters import mel
-        from models.crepe import sampling_freq
+        from models.crepe.crepe import sampling_freq
         from util.calc import square
         
         fft_len = 2048  # 分解能 8Hz
@@ -98,8 +98,43 @@ class crepe_mytask_mel_bins128_alt(Imachine_learning):
         hotvectors = np.array(hotvectors, dtype=np.float32)
         
         # メル変換
-        filter = mel(sampling_freq, fft_len)
+        filter = mel(sampling_freq, fft_len, n_mels=256)
         filter = filter[:, : fft_len // 2]
         frames = np.dot(filter, frames.T).T
         
         return frames, hotvectors
+
+    @classmethod
+    def from_solo_instrument(cls, output_dir):
+        train_data_paths = list(
+            map(
+                lambda x: "./resource/musicnet16k/train_data/{}.wav".format(x),
+                solo_instrumental_train,
+            )
+        )
+        train_labels_paths = list(
+            map(
+                lambda x: "./resource/musicnet16k/train_labels/{}.csv".format(x),
+                solo_instrumental_train,
+            )
+        )
+        test_data_paths = list(
+            map(
+                lambda x: "./resource/musicnet16k/test_data/{}.wav".format(x),
+                solo_instrumental_test,
+            )
+        )
+        test_labels_paths = list(
+            map(
+                lambda x: "./resource/musicnet16k/test_labels/{}.csv".format(x),
+                solo_instrumental_test,
+            )
+        )
+
+        return cls(
+            train_data_paths,
+            train_labels_paths,
+            test_data_paths,
+            test_labels_paths,
+            output_dir,
+        )

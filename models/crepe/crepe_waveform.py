@@ -1,15 +1,16 @@
-import keras
 from machine_learning.interfaces import Imachine_learning
 import numpy as np
+import keras
 from musicnet.musicnet import solo_instrumental_train, solo_instrumental_test
 
-flen = 1024
-fshift = 256
+audio_samples = 1024
+shift_samples = 256
 
-class da_waveform(Imachine_learning):
+
+class crepe_waveform(Imachine_learning):
     def create_model(self) -> keras.Model:
-        import models.DA_Net
-        return models.DA_Net.create_model()
+        from models.crepe import crepe
+        return crepe.create_model()
 
     def _create_dataset_process(self, data_path: str, label_path: str) -> tuple:
         from audio.wavfile import wavfile
@@ -18,26 +19,25 @@ class da_waveform(Imachine_learning):
         waveform = wavfile.read(data_path)
         labels = dataset_label.load(label_path)
         waveform = waveform.data
-        
-        nframe = 1 + (len(waveform) - flen) // fshift    
+
+        nframe = 1 + int((len(waveform) - audio_samples) / shift_samples)
         frames = []
         hotvectors = []
         for i in range(nframe):
-            fstart = i*fshift
-            fend = fstart + flen
-            
+            fstart = i * shift_samples
+            fend = fstart + audio_samples
+
             frame = waveform[fstart:fend]
             frames.append(frame)
-            
+
             label = labels.frame_mid_pitches(fstart, fend)
             hotvector = dataset_label.list2hotvector(label)
             hotvectors.append(hotvector)
-        
+
         frames = np.array(frames, dtype=np.float32)
         hotvectors = np.array(hotvectors, dtype=np.float32)
         return frames, hotvectors
-    
-    
+
     @classmethod
     def from_solo_instrument(cls, output_dir):
         train_data_paths = list(
