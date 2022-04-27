@@ -1,6 +1,8 @@
 from machine_learning.model import hyper_params
-from models.da_waveform import da_waveform
-from models.da_spec import da_spec
+from models.da_net.da_spec import da_spec
+from models.da_net.da_logspec import da_logspec
+from models.da_net.da_waveform import da_waveform
+
 from machine_learning.k_fold_cross_validation import k_fold_cross_validation
 
 params = hyper_params(batch_size=32, epochs=64, epoch_size=500, learning_rate=0.0001)
@@ -9,10 +11,10 @@ train_data = "./resource/musicnet16k/train_data"
 train_labels = "./resource/musicnet16k/train_labels"
 test_data = "./resource/musicnet16k/test_data"
 test_labels = "./resource/musicnet16k/test_labels"
-output_dir = "./experiment/da_waveform_mono"
+output_dir = "./experiment/da_logspec"
 
-# model = da_spec.from_dir(train_data, train_labels, test_data, test_labels, output_dir)
-model = da_waveform.from_solo_instrument(output_dir)
+model = da_logspec.from_dir(train_data, train_labels, test_data, test_labels, output_dir)
+# model = da_spec.from_solo_instrument(output_dir)
 
 model.create_train_set(normalize=False)
 model.create_test_set(normalize=False)
