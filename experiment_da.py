@@ -16,8 +16,8 @@ output_dir = "./experiment/da_logspec"
 model = da_logspec.from_dir(train_data, train_labels, test_data, test_labels, output_dir)
 # model = da_spec.from_solo_instrument(output_dir)
 
-model.create_train_set(normalize=False)
-model.create_test_set(normalize=False)
+# model.create_train_set(normalize=False)
+# model.create_test_set(normalize=False)
 k = 5
 
 model = k_fold_cross_validation(model, params, k)

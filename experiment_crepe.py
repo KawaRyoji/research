@@ -2,15 +2,13 @@ import os
 from machine_learning.k_fold_cross_validation import k_fold_cross_validation
 from machine_learning.model import hyper_params
 import pandas as pd
-from models.crepe_origintask_waveform import crepe_origintask_waveform
-from models.crepe_origintask_spec import crepe_origintask_spec
-from models.crepe_mytask_waveform import crepe_mytask_waveform
-from models.crepe_mytask_spec import crepe_mytask_spec
-from models.crepe_mytask_mel_bins128 import crepe_mytask_mel_bins128
-from models.crepe_mytask_mel_bins256 import crepe_mytask_mel_bins256
-from models.crepe_mytask_logspec import crepe_mytask_logspec
-from models.crepe_origintask_spec_not_windowed import crepe_origintask_spec_not_windowed
-from models.crepe_origintask_waveform_windowed import crepe_origintask_waveform_windowed
+from models.crepe.crepe_waveform import crepe_waveform
+from models.crepe.crepe_spec import crepe_spec
+from models.crepe.crepe_mel_bins128 import crepe_mel_bins128
+from models.crepe.crepe_mel_bins256 import crepe_mel_bins256
+from models.crepe.crepe_logspec import crepe_logspec
+from models.crepe.crepe_spec_not_windowed import crepe_spec_not_windowed
+from models.crepe.crepe_waveform_windowed import crepe_waveform_windowed
 
 params = hyper_params(32, 32, epoch_size=500, learning_rate=0.0002)
 k = 5
@@ -20,59 +18,59 @@ train_labels = "./resource/musicnet16k/train_labels"
 test_data = "./resource/musicnet16k/test_data"
 test_labels = "./resource/musicnet16k/test_labels"
 
-origintask_spec = crepe_origintask_spec.from_solo_instrument(
-    "./experiment/crepe_origintask_spec",
+origintask_spec = crepe_spec.from_solo_instrument(
+    "./experiment/crepe_spec_mono",
 )
 
-origintask_waveform = crepe_origintask_waveform.from_solo_instrument(
-    "./experiment/crepe_origintask_waveform",
+origintask_waveform = crepe_waveform.from_solo_instrument(
+    "./experiment/crepe_waveform_mono",
 )
 
-mytask_waveform = crepe_mytask_waveform.from_dir(
+mytask_waveform = crepe_waveform.from_dir(
     train_data,
     train_labels,
     test_data,
     test_labels,
-    "./experiment/crepe_mytask_waveform",
+    "./experiment/crepe_waveform_poly",
 )
 
-mytask_spec = crepe_mytask_spec.from_dir(
+mytask_spec = crepe_spec.from_dir(
     train_data,
     train_labels,
     test_data,
     test_labels,
-    "./experiment/crepe_mytask_spec",
+    "./experiment/crepe_spec_poly",
 )
 
-mytask_logspec = crepe_mytask_logspec.from_dir(
+mytask_logspec = crepe_logspec.from_dir(
     train_data,
     train_labels,
     test_data,
     test_labels,
-    "./experiment/crepe_mytask_logspec",
+    "./experiment/crepe_logspec_poly",
 )
 
-mytask_mel_bins128 = crepe_mytask_mel_bins128.from_dir(
+mytask_mel_bins128 = crepe_mel_bins128.from_dir(
     train_data,
     train_labels,
     test_data,
     test_labels,
-    "./experiment/crepe_mytask_mel_bins128",
+    "./experiment/crepe_mel_bins128_poly",
 )
-mytask_mel_bins256 = crepe_mytask_mel_bins256.from_dir(
+mytask_mel_bins256 = crepe_mel_bins256.from_dir(
     train_data,
     train_labels,
     test_data,
     test_labels,
-    "./experiment/crepe_mytask_mel_bins256",
+    "./experiment/crepe_mel_bins256_poly",
 )
 
-origintask_spec_not_windowed = crepe_origintask_spec_not_windowed.from_solo_instrument(
-    "./experiment/crepe_origintask_spec_not_windowed",
+origintask_spec_not_windowed = crepe_spec_not_windowed.from_solo_instrument(
+    "./experiment/crepe_spec_not_windowed_mono",
 )
 
-origintask_waveform_windowed = crepe_origintask_waveform_windowed.from_solo_instrument(
-    "./experiment/crepe_origintask_waveform_windowed"
+origintask_waveform_windowed = crepe_waveform_windowed.from_solo_instrument(
+    "./experiment/crepe_waveform_windowed_mono"
 )
 
 
@@ -100,8 +98,8 @@ def _run():
 
 
 def _exp():
-    output_dir = "./experiment/crepe_origintask_waveform_windowed"
-    ml = crepe_origintask_waveform_windowed.from_solo_instrument(output_dir)
+    output_dir = "./experiment/crepe_waveform_windowed_mono"
+    ml = crepe_waveform_windowed.from_solo_instrument(output_dir)
 
     ml.create_train_set()
     ml.create_test_set()
