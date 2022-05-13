@@ -1,7 +1,7 @@
 **/__pycache__/
-experiment/*/*/model_weights
-experiment/*/train.npz
-experiment/*/test.npz
-experiment/*/*/figures/figure*
+experimental_results/*/*/model_weights
+experimental_results/*/train.npz
+experimental_results/*/test.npz
+experimental_results/*/*/figures/figure*
 resource/*
 nohup.out
