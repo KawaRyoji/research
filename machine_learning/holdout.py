@@ -1,13 +1,16 @@
 import os
-
+from pathlib import Path
+import keras
+import keras.backend as K
 import numpy as np
-from machine_learning.dataset import load, normalize_data
-from machine_learning.interfaces import Imachine_learning
-from machine_learning.model import hyper_params
+from machine_learning.dataset import data_sequence, load, normalize_data
+from machine_learning.interfaces import learning_model
+from machine_learning.learning_history import learning_history
+from machine_learning.parameter import hyper_params
 import machine_learning.plot as plot
-import machine_learning.model as m
 
-class Hold_out:
+# TODO: 新しいプログラムへの対応
+class holdout:
     """
     hold-out法によりモデルを学習させるインタフェースです
 
@@ -16,7 +19,7 @@ class Hold_out:
 
     def __init__(
         self,
-        ml: Imachine_learning,
+        ml: learning_model,
         params: hyper_params,
         validation_split: float,
     ) -> None:
@@ -50,17 +53,73 @@ class Hold_out:
         if train_set_path is None:
             train_set_path = os.path.join(self.ml.output_dir, "train.npz")
 
-        m.train_model(
-            model,
-            self.params,
-            self.validation_split,
-            train_set_path,
-            self.ml.output_dir + "/hold_out",
-            save_figure=save_figure,
-            monitor_best_cp=monitor_best_cp,
-            monitor_mode=monitor_mode,
-            callbacks=callbacks,
+        if not model._is_compiled:
+            print("Model should be compiled.")
+            return
+        K.set_value(model.optimizer.lr, self.params.learning_rate)
+
+        print(model.summary())
+        print("loading dataset ...")
+        train_x, train_y, valid_x, valid_y = load(
+            train_set_path, validation_split=self.validation_split
         )
+        print("loading dataset is done")
+        print("train data shape:", train_x.shape)
+        print("train labels shape:", train_y.shape)
+        print("validation data shape:", valid_x.shape)
+        print("validation labels shape:", valid_y.shape)
+        print(self.params)
+
+        result_dir = os.path.join(self.ml.output_dir, "holdout")
+        history_path = os.path.join(result_dir, "history.csv")
+        model_weights_dir = os.path.join(result_dir, "model_weights")
+        checkpoint_path = os.path.join(model_weights_dir, "cp_best.ckpt")
+        figures_dir = os.path.join(result_dir, "figures")
+
+        Path.mkdir(Path(result_dir), parents=True, exist_ok=True)
+        Path.mkdir(Path(model_weights_dir), exist_ok=True)
+
+        self.params.save_to_json(os.path.join(result_dir, "params.json"))
+
+        if callbacks is None:
+            callbacks = []
+
+        cpb_callback = keras.callbacks.ModelCheckpoint(
+            checkpoint_path,
+            monitor=monitor_best_cp,
+            mode=monitor_mode,
+            save_weights_only=True,
+            save_best_only=True,
+            verbose=1,
+        )
+        lg_callback = keras.callbacks.CSVLogger(history_path)
+        callbacks.append(cpb_callback)
+        callbacks.append(lg_callback)
+
+        train_sequence = data_sequence(
+            train_x,
+            train_y,
+            self.params.batch_size,
+            batches_per_epoch=self.params.epoch_size,
+        )
+
+        del train_x
+        del train_y
+
+        model.fit(
+            x=train_sequence,
+            epochs=self.params.epochs,
+            callbacks=callbacks,
+            validation_data=(valid_x, valid_y),
+        )
+
+        history = learning_history.from_path(history_path)
+
+        if save_figure:
+            plot.plot_history(
+                history,
+                figures_dir,
+            )
 
     def test(
         self,
@@ -88,13 +147,21 @@ class Hold_out:
             )
 
         x, y = load(data_path, shuffle=False)
-        m.test_model(
-            model,
-            model_weight_path,
-            os.path.join(self.ml.output_dir, "hold_out", "test_res.txt"),
-            x,
-            y,
+        model.load_weights(model_weight_path)
+
+        res = ""
+        for metric, val in zip(model.metrics_names, model.evaluate(x, y, verbose=2)):
+            res += "{}: {}\n".format(metric, val)
+
+        Path.mkdir(
+            Path(os.path.join(self.ml.output_dir, "hold_out", "test_res.txt")).parent,
+            parents=True,
+            exist_ok=True,
         )
+        with open(
+            os.path.join(self.ml.output_dir, "hold_out", "test_res.txt"), mode="w"
+        ) as f:
+            f.write(res)
 
     def test_from_raw_data(
         self,
@@ -132,7 +199,15 @@ class Hold_out:
         if save_txt_path is None:
             save_txt_path = os.path.join(self.ml.output_dir, "hold_out", "test_res.txt")
 
-        m.test_model(model, model_weight_path, save_txt_path, x, y)
+            model.load_weights(model_weight_path)
+
+        res = ""
+        for metric, val in zip(model.metrics_names, model.evaluate(x, y, verbose=2)):
+            res += "{}: {}\n".format(metric, val)
+
+        Path.mkdir(Path(save_txt_path).parent, parents=True, exist_ok=True)
+        with open(save_txt_path, mode="w") as f:
+            f.write(res)
 
     def predict(
         self,
@@ -270,27 +345,4 @@ class Hold_out:
         """
         self.ml.create_test_set(
             limit=limit, seed=seed, output_path=output_path, **kwargs
-        )
-
-    @classmethod
-    def plot_compare_history(
-        cls, output_dir:str, *models: Imachine_learning, legend: list = None
-    ):
-        """
-        各評価値のエポック数による変化を比較しプロットします
-
-        ## Params:
-            - output_dir (str): 結果の保存先ディレクトリパス
-            - models (Imachine_learning): 比較するモデル
-            - legend (list, optional): 凡例を指定できます
-        """
-        plot.plot_compare_history(
-            output_dir,
-            *[
-                map(
-                    lambda x: os.path.join(x.output_dir, "hold_out", "history.csv"),
-                    models,
-                )
-            ],
-            legend=legend,
         )

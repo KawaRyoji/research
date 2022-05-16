@@ -2,141 +2,177 @@ import os
 from pathlib import Path
 from keras.utils.data_utils import Sequence
 import numpy as np
-
+from typing import List, Tuple, Callable
 from util.calc import calc_split_point
+from util.path import dir2paths
 
 
-def construct_dataset(
-    data_paths: list,
-    labels_paths: list,
-    output_path: str,
-    process,
-    normalize=True,
-    **kwargs
-):
-    """
-    機械学習のデータセットを構築し、.npzファイルに保存します
+class dataset:
+    def __init__(
+        self,
+        data_paths: List[str],
+        label_paths: List[str],
+        construct_process: Callable[[str, str], Tuple[np.ndarray, np.ndarray]],
+    ) -> None:
+        if len(data_paths) != len(label_paths):
+            raise RuntimeError(
+                "the length of data_paths must match the length of label_paths"
+            )
 
-    ## Params
-        - data_paths (list): データのパスのリスト
-        - labels_paths (list): ラベルのパスのリスト\n
+        self.data_paths = np.array(data_paths)
+        self.label_paths = np.array(label_paths)
+        self._construct_process = construct_process
 
-        データとラベルのパスが対応するようにlistに格納してください
+    @classmethod
+    def from_dir(
+        cls,
+        data_dir: str,
+        label_dir: str,
+        construct_process: Callable[[str, str], Tuple[np.ndarray, np.ndarray]],
+    ):
+        data_paths = sorted(dir2paths(data_dir))
+        label_paths = sorted(dir2paths(label_dir))
 
-        - output_path (str): 保存先のパス
-            - ファイル名は拡張子(.npz)を付けずに指定してください
-        - process (function(data_path, labels_path, **kwargs)): データとラベル1組に対する処理
-            - params
-                - data_path (str): データのパス
-                - labels_path (str): ラベルのパス
-                - **kwargs: 処理に渡す引数
-            - returns
-                - datas (list): データ(音データ、画像データなど)
-                - labels (list): データに対応するラベル
-        - normalize (bool, optional): Trueの場合、データを標準化します\n
-            推論する場合は同じくデータを標準化してください
-    """
+        return cls(data_paths, label_paths, construct_process)
 
-    if os.path.exists(output_path + ".npz"):
-        print(output_path + ".npz", "is already exists")
-        return
+    def construct(
+        self,
+        file_name: str,
+        limit: int = None,
+        seed: int = None,
+        normalize=False,
+        **kwargs
+    ):
+        if os.path.exists(file_name + ".npz"):
+            print(file_name + ".npz", "is already exists")
+            return
+ 
+        if limit is not None:
+            assert limit >= 1
 
-    if len(data_paths) != len(labels_paths):
-        raise "the length of data_paths must match the length of labels_paths"
+            limit = min(limit, len(self.data_paths))
 
-    print("start construction")
-    Path.mkdir(Path(output_path).parent, parents=True, exist_ok=True)
+            if seed is None:
+                seed = np.random.randint(np.iinfo(np.int32).max)
 
-    datas = []
-    labels = []
-    for data_path, labels_path in zip(data_paths, labels_paths):
-        print("processing:\n\t", data_path, "\n\t", labels_path)
-        data, label = process(data_path, labels_path, **kwargs)
-        datas.extend(data)
-        labels.extend(label)
-        print("processing is complete")
+            np.random.seed(seed)
+            index = np.random.permutation(len(self.data_paths))
+            data_paths = self.data_paths[index]
+            label_paths = self.label_paths[index]
+            data_paths = data_paths[:limit]
+            label_paths = label_paths[:limit]
+        else:
+            data_paths = self.data_paths
+            label_paths = self.label_paths
+        
+        print("start construction")
+        Path.mkdir(Path(file_name).parent, parents=True, exist_ok=True)
 
-    datas = np.array(datas, dtype=np.float32)
-    labels = np.array(labels, dtype=np.float32)
+        datas = []
+        labels = []
+        for data_path, labels_path in zip(data_paths, label_paths):
+            print("processing:\n\t", data_path, "\n\t", labels_path)
+            data, label = self._construct_process(data_path, labels_path, **kwargs)
+            datas.extend(data)
+            labels.extend(label)
+            print("processing is complete")
 
-    # 標準化処理
-    if normalize:
-        datas = normalize_data(datas)
-        # 0割のデータを除外する
-        idx = ~ np.all(datas==0, axis=1)
-        datas = datas[idx]
-        labels = labels[idx]
+        datas = np.array(datas, dtype=np.float32)
+        labels = np.array(labels, dtype=np.float32)
 
-    np.savez(output_path, x=datas, y=labels)
-    print(
-        "construction is complete\n\tdata shape:\t",
-        datas.shape,
-        "\n\tlabels shape:\t",
-        labels.shape,
-    )
+        # 標準化処理
+        if normalize:
+            datas = dataset.normalize_data(datas)
+            # 0割のデータを除外する
+            idx = ~np.all(datas == 0, axis=1)
+            datas = datas[idx]
+            labels = labels[idx]
 
+        np.savez(file_name, x=datas, y=labels)
+        print(
+            "construction is complete\n\tdata shape:\t",
+            datas.shape,
+            "\n\tlabels shape:\t",
+            labels.shape,
+        )
 
-def load(data_path: str, shuffle=True, validation_split=None):
-    """
-    .npzを読み込み、データとラベルのセットを返します
+    def load(self, file_name: str, shuffle=True, validation_split=None):
+        """
+        .npzを読み込み、データとラベルのセットを返します
 
-    ## Params
-        - data_path (str): 読み込む.npzファイル
-        - shuffle (bool): Trueの場合、データをシャッフルして読み込みます
-        - validation_split (double): 検証用セットの割合を指定します
-            - 0 < validation_split < 1で指定してください
+        ## Params
+            - data_path (str): 読み込む.npzファイル
+            - shuffle (bool): Trueの場合、データをシャッフルして読み込みます
+            - validation_split (double): 検証用セットの割合を指定します
+                - 0 < validation_split < 1で指定してください
 
-    ## Returns
-        - x, y: validation_splitが指定されてない場合
-            - x (np.ndarray): データのテンソル
-            - y (np.ndarray): ラベルのテンソル
-        - train_x, train_y, valid_x, valid_y: validation_splitが指定されている場合
-            - train_x (np.ndarray): 学習データのテンソル
-            - train_y (np.ndarray): 学習ラベルのテンソル
-            - valid_x (np.ndarray): 検証データのテンソル
-            - valid_y (np.ndarray): 検証ラベルのテンソル
-    """
+        ## Returns
+            - x, y: validation_splitが指定されてない場合
+                - x (np.ndarray): データのテンソル
+                - y (np.ndarray): ラベルのテンソル
+            - train_x, train_y, valid_x, valid_y: validation_splitが指定されている場合
+                - train_x (np.ndarray): 学習データのテンソル
+                - train_y (np.ndarray): 学習ラベルのテンソル
+                - valid_x (np.ndarray): 検証データのテンソル
+                - valid_y (np.ndarray): 検証ラベルのテンソル
+        """
 
-    data = np.load(data_path, allow_pickle=True)
-    x, y = data["x"], data["y"]
-    del data
+        data = np.load(file_name + ".npz", allow_pickle=True)
+        x, y = data["x"], data["y"]
+        del data
 
-    if shuffle:
-        shuffle_data(x, y)
+        if shuffle:
+            dataset.shuffle_data(x, y)
 
-    if validation_split is None or validation_split <= 0 or validation_split >= 1:
-        return x, y
+        if validation_split is None or validation_split <= 0 or validation_split >= 1:
+            return x, y
 
-    split_point = calc_split_point(len(x), 1 - validation_split)
+        split_point = calc_split_point(len(x), 1 - validation_split)
 
-    return (
-        x[:split_point],
-        y[:split_point],
-        x[split_point:],
-        y[split_point:],
-    )
+        return (
+            x[:split_point],
+            y[:split_point],
+            x[split_point:],
+            y[split_point:],
+        )
 
+    @classmethod
+    def shuffle_data(cls, x, y, seed=None):
+        """
+        データとラベルの組をシャッフルします
 
-def shuffle_data(x, y, seed=None):
-    """
-    データとラベルの組をシャッフルします
+        このメソッドは破壊的処理です
 
-    このメソッドは破壊的処理です
+        ## Params
+            - x (array): データの配列
+            - y (array): ラベルの配列
 
-    ## Params
-        - x (array): データの配列
-        - y (array): ラベルの配列
+            x, yは最初の次元のサイズを一致させてください
+        """
 
-        x, yは最初の次元のサイズを一致させてください
-    """
+        if seed is None:
+            seed = np.random.randint(np.iinfo(np.int32).max)
 
-    if seed is None:
-        seed = np.random.randint(np.iinfo(np.int32).max)
+        np.random.seed(seed)
+        np.random.shuffle(x)
+        np.random.seed(seed)
+        np.random.shuffle(y)
 
-    np.random.seed(seed)
-    np.random.shuffle(x)
-    np.random.seed(seed)
-    np.random.shuffle(y)
+    @classmethod
+    def normalize_data(cls, data):
+        """
+        データを標準化します\n
+        0割が発生する場合、そのデータは全0になります
+
+        ## Params
+            - datas (array): 標準化するデータ
+
+        ## Returns
+            - array: 標準化されたデータ
+        """
+        data -= np.mean(data, axis=1)[:, np.newaxis]
+        std = np.std(data, axis=1)[:, np.newaxis]
+        return np.divide(data, std, out=np.zeros_like(data), where=std != 0)
 
 
 class data_sequence(Sequence):
@@ -174,21 +210,4 @@ class data_sequence(Sequence):
         return self.data[start:end], self.labels[start:end]
 
     def on_epoch_end(self):
-        shuffle_data(self.data, self.labels)
-
-
-def normalize_data(data):
-    """
-    データを標準化します\n
-    0割が発生する場合、そのデータは全0になります
-        
-    ## Params
-        - datas (array): 標準化するデータ
-
-    ## Returns
-        - array: 標準化されたデータ
-    """
-    data -= np.mean(data, axis=1)[:, np.newaxis]
-    std = np.std(data, axis=1)[:, np.newaxis]
-    return np.divide(data, std, out=np.zeros_like(data), where=std != 0)
-    
+        dataset.shuffle_data(self.data, self.labels)

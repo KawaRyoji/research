@@ -1,46 +1,47 @@
-from machine_learning.metrics import F1_from_log
 from util.fig import graph_plot, graph_settings
 from matplotlib import pyplot as plt
 import matplotlib as mpl
 from pathlib import Path
 import os
 import numpy as np
-import pandas as pd
 import seaborn as sns
+from machine_learning.learning_history import learning_history
+from typing import List
 
-sns.set() # NOTE: subplots()を呼び出す前に呼び出さないと、グリッドが一番手前に表示されてしまう
-sns.set_style("white") # グラフのスタイルを指定
-sns.set_palette("Set1") # ここでカラーパレットを変える
+sns.set()  # NOTE: subplots()を呼び出す前に呼び出さないと、グリッドが一番手前に表示されてしまう
+sns.set_style("white")  # グラフのスタイルを指定
+sns.set_palette("Set1")  # ここでカラーパレットを変える
 
-def plot_history(history_path: str, savefig_dir: str):
-    """
-    学習で得られたhistoryからグラフにプロットし、保存します
+# TODO: コメントの書き直し
+def plot_history(
+    history: learning_history, savefig_dir: str, metrics: List[str] = None
+):
+    f1_applied = history.apply_F1_from_log()
 
-    ## Params
-        - history_path (str): .csvで保存したhistoryのパス
-        - savefig_dir (str): プロットしたグラフを保存するディレクトリパス
-    """
-
-    Path.mkdir(Path(savefig_dir), parents=True, exist_ok=True)
-    history = pd.read_csv(history_path)
-
-    metrics = history.columns.to_list()
-    metrics = list(
-        filter(lambda c: (not c.startswith("val_")) and (not c == "epoch"), metrics)
-    )
+    if metrics is None:
+        metrics = list(filter(lambda c: (not c.startswith("val_")), f1_applied.metrics))
 
     def _plot(metric):
-        plot = history[[metric, "val_" + metric]].plot
+        history_train = f1_applied.of_metric(metric)
+        history_valid = f1_applied.of_metric("val_" + metric)
+
         ylim = (
-            min(min(history[metric]), min(history["val_" + metric])),
-            max(max(history[metric]), max(history["val_" + metric])),
+            min(
+                min(history_train),
+                min(history_valid),
+            ),
+            max(
+                max(history_train),
+                max(history_valid),
+            ),
         )
 
         graph_plot(
-            plot,
+            history_train.plot,
+            history_valid.plot,
             xlabel="epoch",
             ylabel=metric,
-            xlim=(0, len(history) - 1),
+            xlim=(0, len(history_train) - 1),
             ylim=ylim,
             savefig_path=os.path.join(savefig_dir, metric + ".png"),
             legend=["training", "validation"],
@@ -49,6 +50,28 @@ def plot_history(history_path: str, savefig_dir: str):
 
     for metric in metrics:
         _plot(metric)
+
+
+def box_plot_history(
+    history: learning_history, savefig_path: str, stripplot=False, metrics=None
+):
+    if metrics is None:
+        metrics = list(filter(lambda c: not c == "loss", history.metrics))
+
+    filtered = history.filter_by_metrics(metrics)
+    melted = filtered.melt()
+
+    fig, ax = plt.subplots()
+    sns.boxplot(x="variable", y="value", data=melted, whis=[0, 100], ax=ax)
+
+    if stripplot:
+        sns.stripplot(
+            x="variable", y="value", data=melted, jitter=True, color="black", ax=ax
+        )
+
+    graph_settings(
+        xlabel="metrics", ylabel="value", savefig_path=savefig_path, close=True
+    )
 
 
 def plot_activation(activation, savefig_path: str, gray_scale=False):
@@ -99,222 +122,3 @@ def plot_activation_with_labels(labels, activation, savefig_path):
     ax.spines["bottom"].set_visible(False)
     plt.savefig(savefig_path)
     plt.close()
-
-
-def plot_compare_history(savefig_dir: str, *history_paths: str, legend: list = None):
-    """
-    学習から得られたhistoryを比較してプロットします
-
-    metricsはhistory_pathsで最初に指定したhistoryに依存します
-
-    ## Params
-        - savefig_dir (str): プロットしたグラフを保存するディレクトリパス
-        - history_paths (tuple[str, ...]): プロットするhistoryのパス
-        - legend (list, optional): プロットするhistoryの凡例
-            - Noneが指定されている場合、"history1", "history2" ... のようになります
-            - 指定する場合はhistory_pathsと次元を一致させてください
-    """
-    if legend is None:
-        legend = ["history{}".format(i + 1) for i in range(len(history_paths))]
-    else:
-        if len(legend) != len(history_paths):
-            raise "history_pathsとlegendの次元を一致させてください"
-
-    Path.mkdir(Path(savefig_dir), parents=True, exist_ok=True)
-
-    df_histories = [pd.read_csv(history_path) for history_path in history_paths]
-
-    metrics = df_histories[0].columns.tolist()
-    metrics = list(filter(lambda c: not c == "epoch", metrics))
-
-    def _plot(metric):
-        ylim = (
-            min([min(history[metric]) for history in df_histories]),
-            max([max(history[metric]) for history in df_histories]),
-        )
-
-        ylabel = metric[len("val_") :] if metric.startswith("val_") else metric
-        ylabel = ylabel.replace("_", " ")
-        graph_plot(
-            *[history[metric].plot for history in df_histories],
-            xlabel="epoch",
-            ylabel=ylabel,
-            xlim=(0, len(df_histories[0]) - 1),
-            ylim=ylim,
-            savefig_path=os.path.join(savefig_dir, metric + "_compare.png"),
-            legend=legend,
-            close=True,
-        )
-
-    for metric in metrics:
-        _plot(metric)
-
-
-def plot_average_history(savefig_dir: str, history_dir: str, metrics=None):
-    df_histories = [
-        pd.read_csv(os.path.join(history_dir, history_path), index_col=0)
-        for history_path in os.listdir(history_dir)
-    ]
-
-    Path.mkdir(Path(savefig_dir), parents=True, exist_ok=True)
-
-    if metrics is None:
-        metrics = df_histories[0].columns.tolist()
-        metrics = list(
-            filter(lambda c: (not c.startswith("val_")) and (not c == "epoch"), metrics)
-        )
-
-    df_avg = sum(df_histories) / len(df_histories)
-
-    df_avg = F1_from_log(df_avg)
-
-    def _plot(metric):
-        ylim = (
-            min(min(df_avg[metric]), min(df_avg["val_" + metric])),
-            max(max(df_avg[metric]), max(df_avg["val_" + metric])),
-        )
-        plot = df_avg[[metric, "val_" + metric]].plot
-        ylabel = metric[len("val_") :] if metric.startswith("val_") else metric
-        ylabel = ylabel.replace("_", " ")
-        graph_plot(
-            plot,
-            xlabel="epoch",
-            ylabel=ylabel,
-            xlim=(0, len(df_histories[0]) - 1),
-            ylim=ylim,
-            savefig_path=os.path.join(savefig_dir, "average_" + metric + ".png"),
-            legend=["training", "validation"],
-            close=True,
-        )
-    
-    for metric in metrics:
-        _plot(metric)
-
-
-def plot_compare_average_history(
-    savefig_dir: str, *history_dir_paths: str, legend: list = None, metrics=None
-):
-    if legend is None:
-        legend = ["history{}".format(i + 1) for i in range(len(history_dir_paths))]
-    else:
-        if len(legend) != len(history_dir_paths):
-            raise "history_pathsとlegendの次元を一致させてください"
-
-    df_avgs = []
-    for history_dir in history_dir_paths:
-        df_histories = [
-            pd.read_csv(os.path.join(history_dir, history_path), index_col=0)
-            for history_path in os.listdir(history_dir)
-        ]
-        df_avg = sum(df_histories) / len(df_histories)
-        F1_from_log(df_avg)
-        df_avgs.append(df_avg)
-
-    if metrics is None:
-        metrics = df_avgs[0].columns.tolist()
-        metrics = list(filter(lambda c: not c == "epoch" or not c == "loss"))
-
-    def _plot(metric):
-        ylim = (
-            min([min(history[metric]) for history in df_avgs]),
-            max([max(history[metric]) for history in df_avgs]),
-        )
-
-        ylabel = metric[len("val_") :] if metric.startswith("val_") else metric
-        ylabel = ylabel.replace("_", " ")
-        graph_plot(
-            *[history[metric].plot for history in df_avgs],
-            xlabel="epoch",
-            ylabel=ylabel,
-            xlim=(0, len(df_avgs[0]) - 1),
-            ylim=ylim,
-            savefig_path=os.path.join(savefig_dir, metric + "_compare.png"),
-            legend=legend,
-            close=True,
-        )
-
-    for metric in metrics:
-        _plot(metric)
-
-
-def box_plot_history(
-    savefig_path: str, history_path: str, stripplot=False, metrics=None
-):
-    df_history = pd.read_csv(history_path, index_col=0)
-
-    if metrics is None:
-        metrics = df_history.columns.tolist()
-        metrics = list(filter(lambda c: not c == "epoch" or not c == "loss"))
-
-    df_melt = pd.melt(df_history.filter(items=metrics), ignore_index=True)
-
-    fig, ax = plt.subplots()
-    sns.boxplot(x="variable", y="value", data=df_melt, whis=[0, 100], ax=ax)
-
-    if stripplot:
-        sns.stripplot(
-            x="variable", y="value", data=df_melt, jitter=True, color="black", ax=ax
-        )
-
-    graph_settings(
-        xlabel="metrics", ylabel="value", savefig_path=savefig_path, close=True
-    )
-
-
-def box_plot_history_compare(
-    savefig_path: str,
-    *history_paths: str,
-    stripplot=False,
-    legend: list = None,
-    metrics=None
-):
-    if legend is None:
-        legend = ["history{}".format(i + 1) for i in range(len(history_paths))]
-    else:
-        if len(legend) != len(history_paths):
-            raise "history_pathsとlegendの次元を一致させてください"
-
-    df_histories = [
-        pd.read_csv(history_path, index_col=0) for history_path in history_paths
-    ]
-
-    if metrics is None:
-        metrics = df_histories[0].columns.tolist()
-        metrics = list(filter(lambda c: not c == "epoch" or not c == "loss"))
-
-    df_melts = [
-        pd.melt(df_history.filter(items=metrics), ignore_index=True)
-        for df_history in df_histories
-    ]
-
-    for df_melt, l in zip(df_melts, legend):
-        df_melt["group"] = l
-
-    df = pd.concat(df_melts, axis=0)
-    
-    fig, ax = plt.subplots()
-    sns.boxplot(x="variable", y="value", data=df, hue="group", whis=[0, 100], ax=ax)
-
-    h, l = ax.get_legend_handles_labels()
-    if stripplot:
-        sns.stripplot(
-            x="variable",
-            y="value",
-            data=df,
-            hue="group",
-            dodge=True,
-            jitter=True,
-            color="black",
-            ax=ax,
-        )
-        h, l = ax.get_legend_handles_labels()
-        h = h[: len(h) // 2]
-        l = l[: len(l) // 2]
-
-    ax.legend(h, l)
-    graph_settings(
-        xlabel="metrics",
-        ylabel="value",
-        savefig_path=savefig_path,
-        close=True,
-    )
