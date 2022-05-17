@@ -3,7 +3,15 @@ from pathlib import Path
 
 
 class kcv_result:
+    """
+    k分割交差検証の保存先ディレクトリを定義するクラスです。
+    """
     def __init__(self, root_dir: str, k: int) -> None:
+        """
+        Args:
+            root_dir (str): ルートディレクトリのパス
+            k (int): 分割する個数
+        """
         self.root_dir = root_dir
         self.results_dir = os.path.join(self.root_dir, "result_{}fold".format(k))
         self.figures_dir = os.path.join(self.results_dir, "figures")

@@ -16,6 +16,14 @@ sns.set_palette("Set1")  # ここでカラーパレットを変える
 def plot_history(
     history: learning_history, savefig_dir: str, metrics: List[str] = None
 ):
+    """
+    学習履歴から各評価値のエポック数による変化を、学習時と検証時で同時にプロットします。
+
+    Args:
+        history (learning_history): プロットする学習履歴
+        savefig_dir (str): 保存先のディレクトリパス
+        metrics (List[str], optional): プロットする評価値(指定がない場合学習履歴に含まれる全ての評価値)
+    """
     f1_applied = history.apply_F1_from_log()
 
     if metrics is None:
@@ -53,8 +61,20 @@ def plot_history(
 
 
 def box_plot_history(
-    history: learning_history, savefig_path: str, stripplot=False, metrics=None
+    history: learning_history,
+    savefig_path: str,
+    stripplot=False,
+    metrics: List[str] = None,
 ):
+    """
+    学習履歴から各評価値の箱ひげ図をプロットします。
+
+    Args:
+        history (learning_history): プロットする学習履歴
+        savefig_path (str): 保存先のパス(拡張子含む)
+        stripplot (bool, optional): データ点を重ねてプロットするか
+        metrics (List[str], optional): プロットする評価値
+    """
     if metrics is None:
         metrics = list(filter(lambda c: not c == "loss", history.metrics))
 
@@ -74,15 +94,15 @@ def box_plot_history(
     )
 
 
-def plot_activation(activation, savefig_path: str, gray_scale=False):
+def plot_activation(activation: np.ndarray, savefig_path: str, gray_scale=False):
     """
-    mode.predict(x)で得られた推定結果をカラーマップで保存します
+    モデルの推定結果をカラーマップで保存します。
 
-    ## Params
-        - activation (array): 得られた推定結果の配列
-            - 内部で上下を反転する処理が入ります
-        - savefig_path (str): カラーマップを保存するパス
-        - gray_scale (bool): Trueの場合グレースケールで保存します.
+    Args:
+        activation (np.ndarray): 推定結果
+            内部で上下を反転する処理が入ります
+        savefig_path (str): 保存先のパス(拡張子あり)
+        gray_scale (bool): Trueの場合グレースケールで保存します.
     """
 
     fig, ax = plt.subplots()
@@ -98,7 +118,19 @@ def plot_activation(activation, savefig_path: str, gray_scale=False):
     plt.close()
 
 
-def plot_activation_with_labels(labels, activation, savefig_path):
+def plot_activation_with_labels(
+    labels: np.ndarray, activation: np.ndarray, savefig_path: str
+):
+    """
+    モデルの推定結果と正解ラベルをカラーマップで保存します。
+
+    Args:
+        labels (np.ndarray): 正解ラベル
+            転置処理されます
+        activation (np.ndarray): 推定結果
+            転置処理されます
+        savefig_path (str): 保存先のパス(拡張子あり)
+    """
     activation = activation.T
     labels = labels.T
     fig, ax = plt.subplots(

@@ -10,18 +10,24 @@ from machine_learning.metrics import F1_from_log
 from machine_learning.parameter import hyper_params
 import machine_learning.plot as plot
 from machine_learning.dataset import data_sequence
+from typing import List
 
 
 class kcv:
     """
-    k分割交差検証により学習させるインタフェースです
-
-    Imachine_learningに依存しています
+    k分割交差検証を扱うクラスです。
     """
 
     def __init__(
         self, model: learning_model, params: hyper_params, k: int, results: kcv_result
     ) -> None:
+        """
+        Args:
+            model (learning_model): 学習させるモデル
+            params (hyper_params): 学習の際のパラメータ
+            k (int): 分割する個数
+            results (kcv_result): 結果を保存するディレクトリ
+        """
         self.model = model
         self.params = params
         self.k = k
@@ -33,9 +39,20 @@ class kcv:
         y: np.ndarray,
         monitor_best_cp="val_loss",
         monitor_mode="auto",
-        callbacks=None,
-        valid_size=None,
+        callbacks: List[keras.callbacks.Callback] = None,
+        valid_size: int = None,
     ):
+        """
+        k分割交差検証で学習と検証を行います。
+
+        Args:
+            x (np.ndarray): 入力データ
+            y (np.ndarray): 入力データに対応するラベル
+            monitor_best_cp (str, optional): モデルの重みを保存するときにモニタリングする評価値
+            monitor_mode (str, optional): モニタリングのモード
+            callbacks (List[keras.callbacks.Callback], optional): コールバック関数を指定します
+            valid_size (int, optional): 検証用データのサイズを制限します
+        """
         self.params.save_to_json(os.path.join(self.result.results_dir, "params.json"))
 
         fold_size = len(x) // self.k
@@ -102,6 +119,13 @@ class kcv:
             )
 
     def test(self, x: np.ndarray, y: np.ndarray):
+        """
+        学習したモデルから各foldごとにテストします。
+
+        Args:
+            x (np.ndarray): テストするデータ
+            y (np.ndarray): データに対応するラベル
+        """
         results = []
         for fold in range(self.k):
             model = self.model.create_model()
@@ -127,7 +151,17 @@ class kcv:
         self,
         x: np.ndarray,
         model_weight_path: str,
-    ):
+    ) -> np.ndarray:
+        """
+        モデルの推定結果を返します。
+
+        Args:
+            x (np.ndarray): 推定するデータ
+            model_weight_path (str): 推定するときのモデルの重みへのパス
+
+        Returns:
+            np.ndarray: 推定結果
+        """
         model = self.model.create_model()
         model.load_weights(model_weight_path)
 
@@ -135,12 +169,12 @@ class kcv:
 
         return prediction
 
-    def box_plot_history(self, metrics: list = None):
+    def box_plot_history(self, metrics: List[str] = None):
         """
         テスト結果を箱ひげ図にてプロットします
 
-        ## Params:
-            metrics (list, optional): プロットする評価値を指定できます
+        Args:
+            metrics (List[str], optional): プロットする評価値
         """
         plot.box_plot_history(
             os.path.join(
@@ -152,6 +186,9 @@ class kcv:
         )
 
     def plot_average_history(self):
+        """
+        学習と検証の結果のfoldにおける平均値をプロットします。
+        """
         histories = learning_history.from_dir(self.result.histories_dir)
         average = learning_history.average(histories)
 

@@ -13,58 +13,68 @@
 
 ## 使用方法
 
+以下に機械学習をk分割交差検証で行うプログラムを示す。
+someがついた関数、クラスは自身で定義してください
+
 ```python
-    from machine_learning.interfaces import Imachine_learning
-    from machine_learning.model import hyper_params
-    from machine_learning.k_fold_cross_validation import k_fold_cross_validation
+import keras
+from experiments.kcv_experiment import kcv_experiment
+from machine_learning.dataset import dataset
+from machine_learning.parameter import hyper_params
+from machine_learning.model import learning_model
 
-    class some_model(Imachine_learning):
-        def create_model(self) -> keras.Model:
-            # ここにニューラルネットワークのモデルを記述します
-            # モデルはコンパイルを行った状態にしてください
-            model = create_some_model()
-            return model
+# モデルに入力するデータとそれに対応するラベル(ホットベクトル表現)を返す関数を定義する
+def some_construct_process(data_path, label_path) -> tuple:
+    data = some_load_data(data_path) # パスから読み込んだ入力データ
+    label = some_load_label(label_path) # パスから読み込んだ入力データに対応するラベル(ホットベクトル表現)
 
-        def _create_dataset_process(self, data_path: str, label_path: str) -> tuple:
-            # ここにデータファイルパスとラベルファイルパスからデータとラベルを読み込み、
-            # データとラベルを対応させてそれぞれ配列に格納してください
+    return data, label # データとラベルの組を返す
 
-            data = load_data(data_path)
-            label = load_label(label_path)
+class some_model(learning_model):
+    def create_model(self, **kwargs) -> keras.Model:
+        # モデルの定義を記述しモデルを返す
+        model = some_model_define()
+        
+        return model
 
-            datas = some_process_data(data)
-            hotvectors = some_process_label(label) # ラベルは(ワン or マルチ)ホットベクトルを想定しています
+# 学習セットとテストセットのディレクトリを指定
+train_data_dir = "path/to/train/data"
+train_label_dir = "path/to/train/label"
+test_data_dir = "path/to/test/data"
+test_label_dir = "path/to/test/label"
 
-            return datas, hotvectors
-    
-    # バッチサイズなどのパラメータを設定してください
-    params = hyper_params(
-        batch_size = 32,
-        epochs = 100,
-        learning_rate = 0.0002
-    )
+# 学習セットの定義
+train_set = dataset.from_dir(
+    train_data_dir,
+    train_label_dir,
+    some_construct_process,
+)
 
-    # データのディレクトリパスと結果の保存先ディレクトリパスを指定してください
-    model = some_model.from_dir(
-        "to_train_data_dir_path",
-        "to_train_labels_dir_path",
-        "to_test_data_dir_path",
-        "to_test_labels_dir_path",
-        "to_output_dir_path",
-    )
+# テストセットの定義
+test_set = dataset.from_dir(
+    test_data_dir,
+    test_label_dir,
+    some_construct_process,
+)
 
-    # k分割交差検証ではk_fold_cross_validationを使用してください
-    kcv = k_fold_cross_validation(model, params, k=5)
-    # hold_out法ではHold_outを使用してください
-    # ho = Hold_out(model, params, validation_split=0.1)
+experimental_result_dir = "path/to/experimental/result/directory" # 結果を保存するディレクトリへのパス
+params = hyper_params(32, 16, epoch_size=500, learning_rate=0.0001) # 学習時に使用するパラメータ
 
-    kcv.crate_train_set() # 学習データセットの構築
-    kcv.crate_test_set() # テストデータセットの構築
+model = some_model() # 学習させるモデルの作成
 
-    kcv.train()
-    kcv.test()
-    kcv.box_plot_history() # テスト結果を箱ひげ図でプロットします
-    kcv.plot_average_history() # 学習と検証結果をfoldで平均した結果をプロットします
+# k分割交差検証の準備(この場合はk=5)
+ex = kcv_experiment(
+    model=model,
+    train_set=train_set,
+    test_set=test_set,
+    params=params,
+    k=5,
+    experimantal_result_dir=experimental_result_dir,
+)
+
+ex.prepare_dataset() # データセットを作成する
+ex.train() # モデルを学習し、その結果をプロットする
+ex.test() # 学習したモデルの重みでテストし、その結果をプロットする
 ```
 
 ## モジュール
@@ -74,28 +84,36 @@
 wavファイルの読みこみやスペクトログラム作成で使用しました。
 スペクトログラムはlibrosaで自分で作成したほうが速いかもしれません。
 
+### experiments
+
+自身の研究の実験に用いたスクリプトが置いてあります。
+kcv_experiment.pyはk分割交差検証での実験に用いました。
+このkcv_experiment.pyは自身の実験用に書かれたものなので、使う場合は用途に応じて書き換えるか、新たにスクリプトを作成してください。
+
 ### machine_learning
 
 機械学習関連のプログラム群です。
-ここのプログラムにはプログラム上でドキュメントを残しているので参考にしてください。
-(ついていないものもありますがご容赦ください)
+基本的にここにあるプログラム群で機械学習とその結果を操作します。
+
+### models
+
+機械学習のモデルの定義が置いてあります。
 
 ### musicnet
 
 musicnetデータセット用のプログラム群です。
-musicnetを使うという場合にお使いください。
+musicnetを使うという場合に使ってください。
 
 ### util
 
 便利関数群です。
-fig.pyは使えると思うのでグラフを作る際に使用してください。
+fig.pyは自身の実験のグラフを作るときに使用しました。
 
 ## 使用の際に注意すること
 
 機械学習のプログラムですが、結果の保存先を変更しないと実験のたびに結果が上書きされます。
-学習データセットなどはtrain()を呼び出すときに指定できるので、
 タイムスタンプなどで結果の保存先を変えると良いと思います。
-このプログラムを使用するときは、モジュールのディレクトリと同じ階層にプログラムを呼び出すmainファイルを作ると使用しやすいと思います。
+このプログラムを使用するときは、実験用スクリプトを書いてそれをimportする形で実行すると良いと思います。
 
 このプログラムはかなり荒削りで作ったので、プログラムは見にくいかと思いますが、使用方法で示したようにやれば使えるかなと思います。
 ただし、自分は学習データが1次元の場合でしか行っていないので、2次元以上の学習データの入力に対してはおそらくバグがあります。

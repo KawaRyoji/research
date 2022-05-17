@@ -12,6 +12,10 @@ from machine_learning.parameter import hyper_params
 
 
 class kcv_experiment:
+    """
+    k分割交差検証の実験用クラスです。
+    自身の実験に即して書かれているので用いる場合は注意してください。
+    """
     def __init__(
         self,
         model: learning_model,

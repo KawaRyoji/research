@@ -8,12 +8,26 @@ from util.path import dir2paths
 
 
 class dataset:
+    """
+    データセットを扱うクラスです。
+    データとラベルのディレクトリまたはパスのリストとデータ生成の関数を与えて使用します。
+    """
+
     def __init__(
         self,
         data_paths: List[str],
         label_paths: List[str],
         construct_process: Callable[[str, str], Tuple[np.ndarray, np.ndarray]],
     ) -> None:
+        """
+        Args:
+            data_paths (List[str]): データへのパスのリスト
+            label_paths (List[str]): データに対応するラベルへのパスのリスト
+            construct_process (Callable[[str, str], Tuple[np.ndarray, np.ndarray]]): パスからデータとラベルを読み込み、モデルに入力する特徴量を返す関数
+
+        Raises:
+            RuntimeError: データパスのリストとラベルパスのリストの長さが同じではないときに発生します。
+        """
         if len(data_paths) != len(label_paths):
             raise RuntimeError(
                 "the length of data_paths must match the length of label_paths"
@@ -30,6 +44,15 @@ class dataset:
         label_dir: str,
         construct_process: Callable[[str, str], Tuple[np.ndarray, np.ndarray]],
     ):
+        """
+        Args:
+            data_dir (str): データのディレクトリへのパス
+            label_dir (str): データに対応するラベルのディレクトリへのパス
+            construct_process (Callable[[str, str], Tuple[np.ndarray, np.ndarray]]): パスからデータとラベルを読み込み、モデルに入力する特徴量を返す関数
+
+        Returns:
+            dataset: データセットのインスタンス
+        """
         data_paths = sorted(dir2paths(data_dir))
         label_paths = sorted(dir2paths(label_dir))
 
@@ -43,10 +66,19 @@ class dataset:
         normalize=False,
         **kwargs
     ):
+        """
+        データセットをパスとconstruct_processに従って構築し、npzファイルに保存します。
+
+        Args:
+            file_name (str): 保存するデータセットのファイル名(拡張子なし)
+            limit (int, optional): 読み込むデータの数を制限します
+            seed (int, optional): 制限する際のシャッフルに用いられます
+            normalize (bool, optional): 標準化をするかどうかを指定します
+        """
         if os.path.exists(file_name + ".npz"):
             print(file_name + ".npz", "is already exists")
             return
- 
+
         if limit is not None:
             assert limit >= 1
 
@@ -64,7 +96,7 @@ class dataset:
         else:
             data_paths = self.data_paths
             label_paths = self.label_paths
-        
+
         print("start construction")
         Path.mkdir(Path(file_name).parent, parents=True, exist_ok=True)
 
@@ -96,27 +128,19 @@ class dataset:
             labels.shape,
         )
 
-    def load(self, file_name: str, shuffle=True, validation_split=None):
+    def load(self, file_name: str, shuffle=True, validation_split: float = None):
         """
-        .npzを読み込み、データとラベルのセットを返します
+        データセットを読み込みます。
 
-        ## Params
-            - data_path (str): 読み込む.npzファイル
-            - shuffle (bool): Trueの場合、データをシャッフルして読み込みます
-            - validation_split (double): 検証用セットの割合を指定します
-                - 0 < validation_split < 1で指定してください
+        Args:
+            file_name (str): 読み込むデータセットへのパス(拡張子なし)
+            shuffle (bool, optional): データをシャッフルするかどうかを指定します
+            validation_split (float, optional): 検証用に分割する割合
 
-        ## Returns
-            - x, y: validation_splitが指定されてない場合
-                - x (np.ndarray): データのテンソル
-                - y (np.ndarray): ラベルのテンソル
-            - train_x, train_y, valid_x, valid_y: validation_splitが指定されている場合
-                - train_x (np.ndarray): 学習データのテンソル
-                - train_y (np.ndarray): 学習ラベルのテンソル
-                - valid_x (np.ndarray): 検証データのテンソル
-                - valid_y (np.ndarray): 検証ラベルのテンソル
+        Returns:
+            x(np.ndarray), y(np.ndarray): 検証用に分割しない場合の戻り値
+            train_x(np.ndarray), train_y(np.ndarray), valid_x(np.ndarray), valid_y(np.ndarray): 検証用に分割する場合の戻り値
         """
-
         data = np.load(file_name + ".npz", allow_pickle=True)
         x, y = data["x"], data["y"]
         del data
@@ -137,19 +161,15 @@ class dataset:
         )
 
     @classmethod
-    def shuffle_data(cls, x, y, seed=None):
+    def shuffle_data(cls, x, y, seed: int = None):
         """
-        データとラベルの組をシャッフルします
+        データとラベルを対応付けてシャッフルします
 
-        このメソッドは破壊的処理です
-
-        ## Params
-            - x (array): データの配列
-            - y (array): ラベルの配列
-
-            x, yは最初の次元のサイズを一致させてください
+        Args:
+            x (ArrayLike): シャッフルするデータ
+            y (ArrayLike): シャッフルするラベル
+            seed (int, optional): シャッフルする際のシード値
         """
-
         if seed is None:
             seed = np.random.randint(np.iinfo(np.int32).max)
 
@@ -160,16 +180,6 @@ class dataset:
 
     @classmethod
     def normalize_data(cls, data):
-        """
-        データを標準化します\n
-        0割が発生する場合、そのデータは全0になります
-
-        ## Params
-            - datas (array): 標準化するデータ
-
-        ## Returns
-            - array: 標準化されたデータ
-        """
         data -= np.mean(data, axis=1)[:, np.newaxis]
         std = np.std(data, axis=1)[:, np.newaxis]
         return np.divide(data, std, out=np.zeros_like(data), where=std != 0)
@@ -183,12 +193,12 @@ class data_sequence(Sequence):
 
     1エポックのサンプル数は`バッチサイズ x エポックサイズ`となります
 
-    ## Constructer Params
-        - data (array): データの配列
-        - labels (array): ラベルの配列
-        - batch_size (int): バッチサイズ
-        - batches_per_epoch (int): エポックサイズ
-            - 指定されていない場合 `len(data) // batch_size`で計算されます
+    Args:
+        data (np.ndarray): データの配列
+        labels (np.ndarray): ラベルの配列
+        batch_size (int): バッチサイズ
+        batches_per_epoch (int): エポックサイズ
+            指定されていない場合 `len(data) // batch_size`で計算されます
     """
 
     def __init__(self, data, labels, batch_size, batches_per_epoch=None) -> None:

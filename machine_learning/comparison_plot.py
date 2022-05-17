@@ -17,6 +17,14 @@ def plot_histories(
     metrics: List[str] = None,
     legend: List[str] = None
 ):
+    """
+    複数の学習履歴を各評価値ごとに比較し、プロットします。
+
+    Args:
+        savefig_dir (str): 保存先のディレクトリパス
+        metrics (List[str], optional): 比較する評価値
+        legend (List[str], optional): 学習履歴の凡例
+    """
     if legend is None:
         legend = ["history{}".format(i + 1) for i in range(len(histories))]
     else:
@@ -56,6 +64,15 @@ def box_plot_histories(
     legend: List[str] = None,
     metrics: List[str] = None
 ):
+    """
+    複数の学習履歴を各評価値ごとに比較し、箱ひげ図にてプロットします。
+
+    Args:
+        savefig_path (str): 保存先のパス(拡張子あり)
+        stripplot (bool, optional): データ点をプロットするかどうか
+        legend (List[str], optional): 学習履歴の凡例
+        metrics (List[str], optional): 比較する評価値
+    """
     if legend is None:
         legend = ["history{}".format(i + 1) for i in range(len(histories))]
     else:
