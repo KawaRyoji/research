@@ -29,7 +29,7 @@ from musicnet.musicnet import solo_instrument
     test_label_paths,
 ) = solo_instrument()
 
-experimental_result_dir = "./experimental_results/da_test"
+experimental_result_dir = "./experimental_results/example"
 params = hyper_params(32, 16, epoch_size=500, learning_rate=0.0001)
 
 train_set = dataset(train_data_paths, train_label_paths, construct_process)
