@@ -1,8 +1,9 @@
 import os
 from pathlib import Path
-from keras.utils.data_utils import Sequence
+from typing import Callable, List, Tuple
+
 import numpy as np
-from typing import List, Tuple, Callable
+from keras.utils.data_utils import Sequence
 from util.calc import calc_split_point
 from util.path import dir2paths
 
@@ -128,18 +129,16 @@ class dataset:
             labels.shape,
         )
 
-    def load(self, file_name: str, shuffle=True, validation_split: float = None):
+    def load(self, file_name: str, shuffle=True) -> Tuple[np.ndarray, np.ndarray]:
         """
         データセットを読み込みます。
 
         Args:
             file_name (str): 読み込むデータセットへのパス(拡張子なし)
             shuffle (bool, optional): データをシャッフルするかどうかを指定します
-            validation_split (float, optional): 検証用に分割する割合
 
         Returns:
-            x(np.ndarray), y(np.ndarray): 検証用に分割しない場合の戻り値
-            train_x(np.ndarray), train_y(np.ndarray), valid_x(np.ndarray), valid_y(np.ndarray): 検証用に分割する場合の戻り値
+            np.ndarray, np.ndarray: 読み込んだデータとラベル
         """
         data = np.load(file_name + ".npz", allow_pickle=True)
         x, y = data["x"], data["y"]
@@ -148,8 +147,14 @@ class dataset:
         if shuffle:
             dataset.shuffle_data(x, y)
 
-        if validation_split is None or validation_split <= 0 or validation_split >= 1:
-            return x, y
+        return x, y
+
+    @classmethod
+    def split_data(
+        cls, x: np.ndarray, y: np.ndarray, validation_split: float
+    ) -> Tuple[np.ndarray, np.ndarray, np.ndarray, np.ndarray]:
+        if validation_split <= 0 or validation_split >= 1:
+            raise RuntimeError("assuming 0 < split < 1")
 
         split_point = calc_split_point(len(x), 1 - validation_split)
 

@@ -16,6 +16,7 @@ class kcv_experiment:
     k分割交差検証の実験用クラスです。
     自身の実験に即して書かれているので用いる場合は注意してください。
     """
+
     def __init__(
         self,
         model: learning_model,
@@ -73,7 +74,9 @@ class kcv_experiment:
         plot.plot_history(history, self.results.average_result_dir)
 
     def test(self):
-        x, y = self.test_set.load(shuffle=False)
+        x, y = self.test_set.load(
+            os.path.join(self.results.root_dir, "test"), shuffle=False
+        )
 
         self.model.test(x, y)
 
@@ -117,6 +120,7 @@ class kcv_experiment:
             y,
             prediction,
             os.path.join(
-                self.results.figures_dir, "predict_" + basename + "_th0.5.png"
+                self.results.figures_dir,
+                "predict_" + basename + "_th{:.2f}.png".format(threshold),
             ),
         )
