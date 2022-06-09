@@ -1,6 +1,7 @@
 from pathlib import Path
 from matplotlib import pyplot as plt
 
+plt.rcParams["axes.axisbelow"] = True
 
 def graph_plot(
     *plots,
