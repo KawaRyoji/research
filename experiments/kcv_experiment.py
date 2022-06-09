@@ -33,12 +33,12 @@ class kcv_experiment:
         self.params = params
         self.k = k
 
-    def prepare_dataset(self, normalize=False):
+    def prepare_dataset(self, normalize=False, **kwargs):
         self.train_set.construct(
-            os.path.join(self.results.root_dir, "train"), normalize=normalize
+            os.path.join(self.results.root_dir, "train"), normalize=normalize, **kwargs
         )
         self.test_set.construct(
-            os.path.join(self.results.root_dir, "test"), normalize=normalize
+            os.path.join(self.results.root_dir, "test"), normalize=normalize, **kwargs
         )
 
     def train(self):
@@ -70,7 +70,7 @@ class kcv_experiment:
 
     def plot_fold_average(self):
         histories = learning_history.from_dir(self.results.histories_dir)
-        history = learning_history.average(histories)
+        history = learning_history.average(*histories)
         plot.plot_history(history, self.results.average_result_dir)
 
     def test(self):
