@@ -101,32 +101,32 @@ class dataset:
         print("start construction")
         Path.mkdir(Path(file_name).parent, parents=True, exist_ok=True)
 
-        datas = []
-        labels = []
+        data_list = []
+        label_list = []
         for data_path, labels_path in zip(data_paths, label_paths):
             print("processing:\n\t", data_path, "\n\t", labels_path)
             data, label = self._construct_process(data_path, labels_path, **kwargs)
-            datas.extend(data)
-            labels.extend(label)
+            data_list.extend(data)
+            label_list.extend(label)
             print("processing is complete")
 
-        datas = np.array(datas, dtype=np.float32)
-        labels = np.array(labels, dtype=np.float32)
+        data_list = np.array(data_list, dtype=np.float32)
+        label_list = np.array(label_list, dtype=np.float32)
 
         # 標準化処理
         if normalize:
-            datas = dataset.normalize_data(datas)
+            data_list = dataset.normalize_data(data_list)
             # 0割のデータを除外する
-            idx = ~np.all(datas == 0, axis=1)
-            datas = datas[idx]
-            labels = labels[idx]
+            idx = ~np.all(data_list == 0, axis=1)
+            data_list = data_list[idx]
+            label_list = label_list[idx]
 
-        np.savez(file_name, x=datas, y=labels)
+        np.savez(file_name, x=data_list, y=label_list)
         print(
             "construction is complete\n\tdata shape:\t",
-            datas.shape,
+            data_list.shape,
             "\n\tlabels shape:\t",
-            labels.shape,
+            label_list.shape,
         )
 
     def load(self, file_name: str, shuffle=True) -> Tuple[np.ndarray, np.ndarray]:

@@ -2,7 +2,7 @@ import pandas as pd
 import matplotlib.pyplot as plt
 from util.fig import graph_settings
 
-SPEED_SLOGANS = (
+TEMPO_MARKINGS = (
     "prestissimo",
     "presto",
     "vivace",
@@ -33,9 +33,9 @@ class metadata:
     def __init__(self, metadata_csv_path: str) -> None:
         self.data = pd.read_csv(metadata_csv_path)
 
-    def plot_slogan_bar(self, savefig_path: str) -> None:
+    def plot_tempo_marking_bar(self, savefig_path: str) -> None:
         movement = self.data["movement"]
-        movement = movement.map(self._search_slogan)
+        movement = movement.map(self._search_tempo_marking)
         movement.value_counts().plot(kind="bar")
 
         plt.xticks(rotation=90, fontsize=14)
@@ -46,9 +46,9 @@ class metadata:
             close=True,
         )
 
-    def _search_slogan(self, item: str):
+    def _search_tempo_marking(self, item: str):
         item = item.lower()
-        for slogan in SPEED_SLOGANS:
+        for slogan in TEMPO_MARKINGS:
             if slogan in item:
                 return slogan
 

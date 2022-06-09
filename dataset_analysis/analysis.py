@@ -6,7 +6,7 @@ from util.fig import graph_settings
 from util.path import dir2paths
 
 d = metadata("./resource/musicnet/musicnet_metadata.csv")
-d.plot_slogan_bar("./dataset_analysis/slogan.png")
+d.plot_tempo_marking_bar("./dataset_analysis/slogan.png")
 d.plot_ensemble_bar("./dataset_analysis/ensemble.png")
 
 train_label_paths = dir2paths("./resource/musicnet16k/train_labels")
