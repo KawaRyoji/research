@@ -25,7 +25,7 @@ ex = kcv_experiment(
     test_set=test_set,
     params=params,
     k=5,
-    experimantal_result_dir=experimental_result_dir,
+    experimental_result_dir=experimental_result_dir,
 )
 
 ex.prepare_dataset()

@@ -1,14 +1,15 @@
 import os
-
-import numpy as np
-from machine_learning.learning_history import learning_history
+from typing import List
 
 import machine_learning.plot as plot
-from machine_learning.model import learning_model
+import numpy as np
+from keras.callbacks import Callback
 from machine_learning.dataset import dataset
-from machine_learning.parameter import hyper_params
-from machine_learning.holdout.holdout_result import holdout_result
 from machine_learning.holdout.holdout import holdout
+from machine_learning.holdout.holdout_result import holdout_result
+from machine_learning.learning_history import learning_history
+from machine_learning.model import learning_model
+from machine_learning.parameter import hyper_params
 
 
 class ho_experiment:
@@ -26,15 +27,15 @@ class ho_experiment:
         self.test_set = test_set
         self.params = params
 
-    def prepare_dataset(self, normalize=False):
+    def prepare_dataset(self, normalize=False, **kwargs):
         self.train_set.construct(
-            os.path.join(self.results.root_dir, "train"), normalize=normalize
+            os.path.join(self.results.root_dir, "train"), normalize=normalize, **kwargs
         )
         self.test_set.construct(
-            os.path.join(self.results.root_dir, "test"), normalize=normalize
+            os.path.join(self.results.root_dir, "test"), normalize=normalize, **kwargs
         )
 
-    def train(self, valid_split=0.25):
+    def train(self, valid_split=0.25, callbacks=List[Callback]):
         print("loading dataset ...")
         x, y = self.train_set.load(os.path.join(self.results.root_dir, "train"))
         print("loading dataset is done")
@@ -48,6 +49,7 @@ class ho_experiment:
             valid_split,
             monitor_best_cp="val_F1",
             monitor_mode="max",
+            callbacks=callbacks
         )
 
         self.plot_result()

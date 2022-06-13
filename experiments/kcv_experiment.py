@@ -24,9 +24,9 @@ class kcv_experiment:
         test_set: dataset,
         params: hyper_params,
         k: int,
-        experimantal_result_dir: str,
+        experimental_result_dir: str,
     ) -> None:
-        self.results = kcv_result(experimantal_result_dir, k)
+        self.results = kcv_result(experimental_result_dir, k)
         self.model = kcv(model, params, k, self.results)
         self.train_set = train_set
         self.test_set = test_set
