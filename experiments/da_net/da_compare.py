@@ -46,7 +46,7 @@ spec_not_normalized_test_poly = learning_history.from_path(
     "./experimental_results/da_spec_not_normalized_poly/result_5fold/test_res.csv"
 )
 
-# 対数スペクトル　複数音高推定
+# 対数スペクトル(標準化なし)　複数音高推定 flen=1024
 logspec_poly = learning_history.from_dir(
     "./experimental_results/da_logspec_poly/result_5fold/histories"
 )
@@ -89,6 +89,33 @@ spec_w512_poly = learning_history.from_dir(
 spec_w512_poly = learning_history.average(*spec_w512_poly)
 spec_w512_test_poly = learning_history.from_path(
     "./experimental_results/da_spec_w512_poly/result_5fold/test_res.csv"
+)
+
+# 対数スペクトル(標準化なし) 複数音高推定 flen=2048
+logspec_w2048_poly = learning_history.from_dir(
+    "./experimental_results/da_logspec_w2048_poly/result_5fold/histories"
+)
+logspec_w2048_poly = learning_history.average(*logspec_w2048_poly)
+logspec_w2048_test_poly = learning_history.from_path(
+    "./experimental_results/da_logspec_w2048_poly/result_5fold/test_res.csv"
+)
+
+# 対数スペクトル(標準化なし) 複数音高推定 flen=4096
+logspec_w4096_poly = learning_history.from_dir(
+    "./experimental_results/da_logspec_w4096_poly/result_5fold/histories"
+)
+logspec_w4096_poly = learning_history.average(*logspec_w4096_poly)
+logspec_w4096_test_poly = learning_history.from_path(
+    "./experimental_results/da_logspec_w4096_poly/result_5fold/test_res.csv"
+)
+
+# 対数スペクトル(標準化なし) 複数音高推定 flen=512
+logspec_w512_poly = learning_history.from_dir(
+    "./experimental_results/da_logspec_w512_poly/result_5fold/histories"
+)
+logspec_w512_poly = learning_history.average(*logspec_w512_poly)
+logspec_w512_test_poly = learning_history.from_path(
+    "./experimental_results/da_logspec_w512_poly/result_5fold/test_res.csv"
 )
 
 metrics = ["precision", "recall", "F1"]
@@ -150,9 +177,9 @@ cplot.box_plot_histories(
     legend=["normalized", "not normalized"],
 )
 
-# フレーム長による比較
+# フレーム長による比較(スペクトル)
 cplot.plot_histories(
-    "./comparison_results/da_window_len_poly",
+    "./comparison_results/da_spec_window_len_poly",
     spec_w512_poly,
     spec_not_normalized_poly,
     spec_w2048_poly,
@@ -162,11 +189,32 @@ cplot.plot_histories(
 )
 
 cplot.box_plot_histories(
-    "./comparison_results/da_window_len_poly/test_res_compare.png",
+    "./comparison_results/da_spec_window_len_poly/test_res_compare.png",
     spec_w512_test_poly,
     spec_not_normalized_test_poly,
     spec_w2048_test_poly,
     spec_w4096_test_poly,
+    metrics=metrics,
+    legend=["512", "1024", "2048", "4096"],
+)
+
+# フレーム長による比較(対数スペクトル)
+cplot.plot_histories(
+    "./comparison_results/da_logspec_window_len_poly",
+    logspec_w512_poly,
+    logspec_poly,
+    logspec_w2048_poly,
+    logspec_w4096_poly,
+    metrics=metrics,
+    legend=["512", "1024", "2048", "4096"],
+)
+
+cplot.box_plot_histories(
+    "./comparison_results/da_logspec_window_len_poly/test_res_compare.png",
+    logspec_w512_test_poly,
+    logspec_test_poly,
+    logspec_w2048_test_poly,
+    logspec_w4096_test_poly,
     metrics=metrics,
     legend=["512", "1024", "2048", "4096"],
 )

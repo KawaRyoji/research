@@ -5,12 +5,9 @@ from audio.wavfile import wavfile
 from musicnet.annotation import dataset_label
 
 
-def construct_process(data_path: str, label_path: str) -> tuple:
-
-    fft_len = 2048  # 分解能 8Hz
-    flen = 1024  # 時間長 64ms
-    fshift = 256  # 時間長 16ms
-
+def construct_process(
+    data_path: str, label_path: str, fft_len=2048, flen=1024, fshift=256
+) -> tuple:
     waveform = wavfile.read(data_path)
     labels = dataset_label.load(label_path)
     waveform = waveform.data

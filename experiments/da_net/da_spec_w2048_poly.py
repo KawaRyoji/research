@@ -34,6 +34,20 @@ ex = kcv_experiment(
     experimantal_result_dir=experimental_result_dir,
 )
 
-ex.prepare_dataset(normalize=False, flen=2048)
+flen = 2048
+
+ex.prepare_dataset(normalize=False, flen=flen)
 ex.train()
 ex.test()
+ex.plot_prediction(
+    "./resource/musicnet16k/test_data/2556.wav",
+    "./resource/musicnet16k/test_labels/2556.csv",
+    threshold=0.5,
+    flen=flen
+)
+ex.plot_prediction(
+    "./resource/musicnet16k/test_data/2628.wav",
+    "./resource/musicnet16k/test_labels/2628.csv",
+    threshold=0.5,
+    flen=flen
+)

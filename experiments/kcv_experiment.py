@@ -90,7 +90,12 @@ class kcv_experiment:
         )
 
     def plot_prediction(
-        self, data_path: str, label_path: str, normalize=False, threshold: float = None
+        self,
+        data_path: str,
+        label_path: str,
+        normalize=False,
+        threshold: float = None,
+        **kwargs
     ):
         test_res = pd.read_csv(os.path.join(self.results.results_dir, "test_res.csv"))
         res = pd.DataFrame.max(test_res, axis="index")
@@ -99,7 +104,7 @@ class kcv_experiment:
         )
         basename = os.path.basename(data_path)
 
-        x, y = self.train_set._construct_process(data_path, label_path)
+        x, y = self.train_set._construct_process(data_path, label_path, **kwargs)
         if normalize:
             x = dataset.normalize_data(x)
 
