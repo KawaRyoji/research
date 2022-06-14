@@ -28,6 +28,7 @@ class holdout:
         monitor_best_cp="val_loss",
         monitor_mode="auto",
         callbacks: List[keras.callbacks.Callback] = None,
+        valid_limit: int = None,
     ) -> None:
         model = self.model.create_model()
 
@@ -65,6 +66,10 @@ class holdout:
         del train_x
         del train_y
 
+        if not valid_limit is None:
+            valid_x = valid_x[:valid_limit]
+            valid_y = valid_y[:valid_limit]    
+        
         model.fit(
             x=train_sequence,
             epochs=self.params.epochs,
@@ -81,7 +86,7 @@ class holdout:
         model.load_weights(self.result.model_weight_path)
 
         result = model.evaluate(x, y, verbose=2)
-        df = pd.DataFrame(result, columns=model.metrics_names)
+        df = pd.DataFrame([result], columns=model.metrics_names)
 
         df = F1_from_log(df)
         df.to_csv(os.path.join(self.result.results_dir, "test_res.csv"))

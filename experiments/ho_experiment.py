@@ -35,7 +35,9 @@ class ho_experiment:
             os.path.join(self.results.root_dir, "test"), normalize=normalize, **kwargs
         )
 
-    def train(self, valid_split=0.25, callbacks=List[Callback]):
+    def train(
+        self, valid_split=0.25, callbacks=List[Callback], valid_limit: int = None
+    ):
         print("loading dataset ...")
         x, y = self.train_set.load(os.path.join(self.results.root_dir, "train"))
         print("loading dataset is done")
@@ -49,7 +51,8 @@ class ho_experiment:
             valid_split,
             monitor_best_cp="val_F1",
             monitor_mode="max",
-            callbacks=callbacks
+            callbacks=callbacks,
+            valid_limit=valid_limit,
         )
 
         self.plot_result()
@@ -62,9 +65,14 @@ class ho_experiment:
         self.model.test(x, y)
 
     def plot_prediction(
-        self, data_path: str, label_path: str, normalize=False, threshold: float = None
+        self,
+        data_path: str,
+        label_path: str,
+        normalize=False,
+        threshold: float = None,
+        **kwargs
     ):
-        x, y = self.train_set._construct_process(data_path, label_path)
+        x, y = self.train_set._construct_process(data_path, label_path, **kwargs)
         basename = os.path.basename(data_path)
 
         if normalize:
@@ -91,7 +99,7 @@ class ho_experiment:
             prediction,
             os.path.join(
                 self.results.figures_dir,
-                "predict_" + basename + "_th{:2f}.png".format(threshold),
+                "predict_" + basename + "_th{:.2f}.png".format(threshold),
             ),
         )
 
