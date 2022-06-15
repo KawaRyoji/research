@@ -35,6 +35,11 @@ def plot_histories(
         metrics = histories[0].metrics
 
     def _plot(metric: str):
+        xlim = (
+            0,
+            max(list(map(lambda history: len(history.of_metric(metric)), histories)))
+            - 1,
+        )
         ylim = (
             min(list(map(lambda history: min(history.of_metric(metric)), histories))),
             max(list(map(lambda history: max(history.of_metric(metric)), histories))),
@@ -46,7 +51,7 @@ def plot_histories(
             *list(map(lambda history: history.of_metric(metric).plot, histories)),
             xlabel="epoch",
             ylabel=ylabel,
-            xlim=(0, len(histories[0].of_metric(metric)) - 1),
+            xlim=xlim,
             ylim=ylim,
             savefig_path=os.path.join(savefig_dir, metric + "_compare.png"),
             legend=legend,
@@ -87,10 +92,8 @@ def box_plot_histories(
         map(lambda history: history.filter_by_metrics(metrics), histories)
     )
 
-    melted_hisories = list(
-        map(lambda history: history.melt(), filtered_histories)
-    )
-    
+    melted_hisories = list(map(lambda history: history.melt(), filtered_histories))
+
     for melted_history, l in zip(melted_hisories, legend):
         melted_history["group"] = l
 

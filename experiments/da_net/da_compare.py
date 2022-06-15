@@ -19,6 +19,14 @@ waveform_test_mono = learning_history.from_path(
     "./experimental_results/da_waveform_mono/result_5fold/test_res.csv"
 )
 
+# 時間波形　複数音高推定　上限なし
+waveform_nolimit = learning_history.from_path(
+    "./experimental_results/da_waveform_nolimit_poly/holdout_result/history.csv"
+)
+waveform_test_nolimit = learning_history.from_path(
+    "./experimental_results/da_waveform_nolimit_poly/holdout_result/test_res.csv"
+)
+
 # スペクトル　複数音高推定
 spec_poly = learning_history.from_dir(
     "./experimental_results/da_spec_poly/result_5fold/histories"
@@ -46,6 +54,14 @@ spec_not_normalized_test_poly = learning_history.from_path(
     "./experimental_results/da_spec_not_normalized_poly/result_5fold/test_res.csv"
 )
 
+# スペクトル　複数音高推定　上限なし
+spec_nolimit = learning_history.from_path(
+    "./experimental_results/da_spec_nolimit_poly/holdout_result/history.csv"
+)
+spec_test_nolimit = learning_history.from_path(
+    "./experimental_results/da_spec_nolimit_poly/holdout_result/test_res.csv"
+)
+
 # 対数スペクトル(標準化なし)　複数音高推定 flen=1024
 logspec_poly = learning_history.from_dir(
     "./experimental_results/da_logspec_poly/result_5fold/histories"
@@ -62,6 +78,14 @@ logspec_mono = learning_history.from_dir(
 logspec_mono = learning_history.average(*logspec_mono)
 logspec_test_mono = learning_history.from_path(
     "./experimental_results/da_logspec_mono/result_5fold/test_res.csv"
+)
+
+# スペクトル　複数音高推定　上限なし
+logspec_nolimit = learning_history.from_path(
+    "./experimental_results/da_logspec_nolimit_poly/holdout_result/history.csv"
+)
+logspec_test_nolimit = learning_history.from_path(
+    "./experimental_results/da_logspec_nolimit_poly/holdout_result/test_res.csv"
 )
 
 # スペクトル(標準化なし) 複数音高推定 flen=2048
@@ -217,4 +241,14 @@ cplot.box_plot_histories(
     logspec_w4096_test_poly,
     metrics=metrics,
     legend=["512", "1024", "2048", "4096"],
+)
+
+# 上限なしによる比較
+cplot.plot_histories(
+    "./comparison_results/da_nolimit",
+    waveform_nolimit,
+    spec_nolimit,
+    logspec_nolimit,
+    metrics=metrics,
+    legend=["waveform", "spectrum", "log spectrum"],
 )
