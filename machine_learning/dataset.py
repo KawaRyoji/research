@@ -3,7 +3,7 @@ from pathlib import Path
 from typing import Callable, List, Tuple
 
 import numpy as np
-from keras.utils.data_utils import Sequence
+from tensorflow.keras.utils import Sequence
 from util.calc import calc_split_point
 from util.path import dir2paths
 

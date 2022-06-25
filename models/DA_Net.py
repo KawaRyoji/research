@@ -1,14 +1,27 @@
-import keras
-
+from machine_learning.metrics import F1
 from machine_learning.model import learning_model
+from tensorflow.keras import Model
+from tensorflow.keras.layers import (
+    Add,
+    BatchNormalization,
+    Conv1D,
+    Dense,
+    Dropout,
+    Flatten,
+    GlobalAveragePooling1D,
+    Input,
+    MaxPooling1D,
+    Multiply,
+    Reshape,
+)
+from tensorflow.keras.metrics import BinaryAccuracy, Precision, Recall
+from tensorflow.keras.optimizers import Adam
 
 fs = 16000
 
+
 class DA_Net(learning_model):
-    def create_model(self, input_size=1024, **kwargs) -> keras.Model:
-        from keras.layers import Input, Reshape, Flatten, Dense
-        from keras.metrics import Precision, BinaryAccuracy, Recall
-        from machine_learning.metrics import F1
+    def create_model(self, input_size=1024, **kwargs) -> Model:
 
         layers = [1, 2, 3, 4, 5, 6]
         kernel_size = [512, 64, 64, 64, 64, 64]
@@ -25,9 +38,9 @@ class DA_Net(learning_model):
         y = Flatten(name="flatten")(y)
         y = Dense(128, activation="sigmoid", name="classifier")(y)
 
-        model = keras.Model(inputs=x, outputs=y)
+        model = Model(inputs=x, outputs=y)
         model.compile(
-            optimizer=keras.optimizers.Adam(),
+            optimizer=Adam(),
             loss="binary_crossentropy",
             metrics=[
                 BinaryAccuracy(),
@@ -39,18 +52,8 @@ class DA_Net(learning_model):
 
         return model
 
+    def _da_module(self, x, layer, filter, kernel_size, stride, pooling_size) -> Model:
 
-    def _da_module(self, x, layer, filter, kernel_size, stride, pooling_size) -> keras.Model:
-        from keras.layers import (
-            Conv1D,
-            BatchNormalization,
-            Multiply,
-            GlobalAveragePooling1D,
-            Dense,
-            Add,
-            MaxPooling1D,
-            Dropout
-        )
         r = 16
 
         # Element-wise Attention
@@ -73,10 +76,10 @@ class DA_Net(learning_model):
 
         # Channel-wise Attention
         y_cw = GlobalAveragePooling1D(name="da-cw-gap%d" % layer)(y_ew_u)
-        y_cw = Dense(filter//r, activation="relu", name="da-cw-dr%d" % layer)(y_cw)
+        y_cw = Dense(filter // r, activation="relu", name="da-cw-dr%d" % layer)(y_cw)
         y_cw = Dense(filter, activation="sigmoid", name="da-cw-ds%d" % layer)(y_cw)
         y_cw = Multiply(name="da-cw-mul%d" % layer)([y_ew_u, y_cw])
-        
+
         y = Add(name="da-add%d" % layer)([y_ew, y_cw])
         y = BatchNormalization(name="da-BN%d" % layer)(y)
         y = MaxPooling1D(pool_size=pooling_size, name="da-mp%d" % layer)(y)

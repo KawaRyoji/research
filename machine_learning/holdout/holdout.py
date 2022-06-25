@@ -1,10 +1,10 @@
 import os
 from typing import List
 
-import keras
-import keras.backend as K
+import tensorflow.keras.backend as K
 import numpy as np
 import pandas as pd
+from tensorflow.keras.callbacks import Callback, ModelCheckpoint, CSVLogger
 from machine_learning.dataset import data_sequence, dataset
 from machine_learning.holdout.holdout_result import holdout_result
 from machine_learning.metrics import F1_from_log
@@ -27,7 +27,7 @@ class holdout:
         valid_split: float,
         monitor_best_cp="val_loss",
         monitor_mode="auto",
-        callbacks: List[keras.callbacks.Callback] = None,
+        callbacks: List[Callback] = None,
         valid_limit: int = None,
     ) -> None:
         model = self.model.create_model()
@@ -44,7 +44,7 @@ class holdout:
         if callbacks is None:
             callbacks = []
 
-        cp_callback = keras.callbacks.ModelCheckpoint(
+        cp_callback = ModelCheckpoint(
             self.result.model_weight_path,
             monitor=monitor_best_cp,
             mode=monitor_mode,
@@ -52,7 +52,7 @@ class holdout:
             save_best_only=True,
             verbose=1,
         )
-        lg_callback = keras.callbacks.CSVLogger(self.result.history_path)
+        lg_callback = CSVLogger(self.result.history_path)
         callbacks.append(cp_callback)
         callbacks.append(lg_callback)
 
@@ -68,8 +68,8 @@ class holdout:
 
         if not valid_limit is None:
             valid_x = valid_x[:valid_limit]
-            valid_y = valid_y[:valid_limit]    
-        
+            valid_y = valid_y[:valid_limit]
+
         model.fit(
             x=train_sequence,
             epochs=self.params.epochs,

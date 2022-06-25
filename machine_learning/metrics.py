@@ -1,4 +1,4 @@
-import keras.backend as K
+import tensorflow.keras.backend as K
 import pandas as pd
 
 # NOTE: 算術平均の影響で誤差を含む
@@ -22,7 +22,7 @@ def F1(y_true, y_pred):
 
 
 def innerF1(precision, recall):
-    return 2. * ((precision * recall) / (precision + recall + K.epsilon()))
+    return 2.0 * ((precision * recall) / (precision + recall + K.epsilon()))
 
 
 def F1_from_log(history: pd.DataFrame):
@@ -40,6 +40,7 @@ def F1_from_log(history: pd.DataFrame):
             )
 
     return history
+
 
 def apply_F1_from_log(history_path: str):
     df = pd.read_csv(history_path, index_col=0)

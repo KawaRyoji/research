@@ -1,14 +1,23 @@
-import keras
+from machine_learning.metrics import F1
 from machine_learning.model import learning_model
+from tensorflow.keras import Model
+from tensorflow.keras.layers import (
+    BatchNormalization,
+    Conv2D,
+    Dense,
+    Dropout,
+    Flatten,
+    Input,
+    MaxPool2D,
+    Permute,
+    Reshape,
+)
+from tensorflow.keras.metrics import BinaryAccuracy, Precision, Recall
+from tensorflow.keras.optimizers import Adam
 
 
 class CREPE(learning_model):
-    def create_model(self, input_size=1024, first_stride=4, **kwargs) -> keras.Model:
-        from keras.layers import Input, Reshape, Conv2D, BatchNormalization
-        from keras.layers import MaxPool2D, Dropout, Permute, Flatten, Dense
-        from keras.models import Model
-        from keras.metrics import Precision, BinaryAccuracy, Recall
-        from machine_learning.metrics import F1
+    def create_model(self, input_size=1024, first_stride=4, **kwargs) -> Model:
 
         capacity_multiplier = 32
         layers = [1, 2, 3, 4, 5, 6]
@@ -50,7 +59,7 @@ class CREPE(learning_model):
 
         model = Model(inputs=x, outputs=y)
         model.compile(
-            optimizer=keras.optimizers.Adam(),
+            optimizer=Adam(),
             loss="binary_crossentropy",
             metrics=[
                 BinaryAccuracy(),

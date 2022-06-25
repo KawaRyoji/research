@@ -1,8 +1,3 @@
-from keras.metrics import Metric
-import numpy as np
-import tensorflow as tf
-
-
 num_notes = 128
 num_instruments = 128
 

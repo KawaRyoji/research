@@ -1,12 +1,14 @@
 from abc import ABCMeta, abstractmethod
-import keras
+from tensorflow.keras import Model
+
 
 class learning_model(metaclass=ABCMeta):
     """
     学習させるモデルを定義するクラスです。
     """
+
     @abstractmethod
-    def create_model(self, **kwargs) -> keras.Model:
+    def create_model(self, **kwargs) -> Model:
         """
         モデルの定義とそのモデルを返す関数です。
 
@@ -14,6 +16,6 @@ class learning_model(metaclass=ABCMeta):
             NotImplementedError: 実装されてないときのエラー
 
         Returns:
-            keras.Model: 定義したモデル
+            Model: 定義したモデル
         """
         raise NotImplementedError()

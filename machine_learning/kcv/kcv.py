@@ -1,11 +1,11 @@
 import os
-import keras.backend as K
-import keras
+import tensorflow.keras.backend as K
 import numpy as np
 import pandas as pd
 from machine_learning.model import learning_model
 from machine_learning.kcv.kcv_result import kcv_result
 from machine_learning.learning_history import learning_history
+from tensorflow.keras.callbacks import Callback, ModelCheckpoint, CSVLogger
 from machine_learning.metrics import F1_from_log
 from machine_learning.parameter import hyper_params
 import machine_learning.plot as plot
@@ -39,7 +39,7 @@ class kcv:
         y: np.ndarray,
         monitor_best_cp="val_loss",
         monitor_mode="auto",
-        callbacks: List[keras.callbacks.Callback] = None,
+        callbacks: List[Callback] = None,
         valid_size: int = None,
     ):
         """
@@ -70,7 +70,7 @@ class kcv:
             else:
                 callbacks_f = callbacks
 
-            cp_callback = keras.callbacks.ModelCheckpoint(
+            cp_callback = ModelCheckpoint(
                 os.path.join(
                     self.result.model_weights_dir,
                     "cp_best_fold{}.ckpt".format(fold),
@@ -81,7 +81,7 @@ class kcv:
                 save_best_only=True,
                 verbose=1,
             )
-            lg_callback = keras.callbacks.CSVLogger(
+            lg_callback = CSVLogger(
                 os.path.join(
                     self.result.histories_dir, "history_fold{}.csv".format(fold)
                 )

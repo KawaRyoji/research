@@ -1,6 +1,11 @@
-import keras.backend as K
+import tensorflow.keras.backend as K
 import librosa
 import numpy as np
+from tensorflow.keras.layers import Input, BatchNormalization, Conv2D, Lambda
+from tensorflow.keras.models import Model
+from machine_learning.metrics import F1
+from tensorflow.keras.metrics import Precision, Recall
+from tensorflow.keras.optimizers import Adam
 
 BINS_PER_OCTAVE = 12
 N_OCTAVES = 10
@@ -44,11 +49,6 @@ def compute_hcqt(audio_fpath):
 
 
 def create_model():
-    from keras.layers import Input, BatchNormalization, Conv2D, Lambda
-    from keras.models import Model
-    from machine_learning.metrics import F1
-    from keras.metrics import Precision, Recall
-    from keras.optimizers import Adam
 
     input_shape = (None, None, 6)
     inputs = Input(shape=input_shape)

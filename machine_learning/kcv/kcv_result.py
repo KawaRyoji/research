@@ -6,6 +6,7 @@ class kcv_result:
     """
     k分割交差検証の保存先ディレクトリを定義するクラスです。
     """
+
     def __init__(self, root_dir: str, k: int) -> None:
         """
         Args:
@@ -29,4 +30,3 @@ class kcv_result:
         Path(self.average_result_dir).mkdir(parents=True, exist_ok=True)
         Path(self.histories_dir).mkdir(parents=True, exist_ok=True)
         Path(self.model_weights_dir).mkdir(parents=True, exist_ok=True)
-        

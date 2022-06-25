@@ -3,7 +3,7 @@ from typing import List
 
 import machine_learning.plot as plot
 import numpy as np
-from keras.callbacks import Callback
+from tensorflow.keras.callbacks import Callback
 from machine_learning.dataset import dataset
 from machine_learning.holdout.holdout import holdout
 from machine_learning.holdout.holdout_result import holdout_result
@@ -36,7 +36,10 @@ class ho_experiment:
         )
 
     def train(
-        self, valid_split=0.25, callbacks=List[Callback], valid_limit: int = None
+        self,
+        valid_split=0.25,
+        callbacks: List[Callback] = None,
+        valid_limit: int = None,
     ):
         print("loading dataset ...")
         x, y = self.train_set.load(os.path.join(self.results.root_dir, "train"))

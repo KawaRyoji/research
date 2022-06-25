@@ -1,6 +1,8 @@
-import keras
-from pathlib import Path
 import json
+from pathlib import Path
+
+from tensorflow.keras.optimizers import Adam
+
 
 # TODO: オプティマイザをモデルに適用する
 class hyper_params:
@@ -10,7 +12,7 @@ class hyper_params:
         epochs,
         epoch_size=None,
         learning_rate=None,
-        optimizer=keras.optimizers.Adam,
+        optimizer=Adam,
     ) -> None:
         if learning_rate is None:
             self.learning_rate = 0.0001

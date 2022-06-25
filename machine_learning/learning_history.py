@@ -7,7 +7,7 @@ class learning_history:
     """
     tensorflowのCSVLoggerで保存された学習履歴を扱うクラスです。
     """
-    
+
     def __init__(self, df_history: pd.DataFrame, metrics: list) -> None:
         """
         Args:
@@ -21,7 +21,7 @@ class learning_history:
     def from_path(cls, history_path: str) -> "learning_history":
         """
         学種履歴のcsvのパスを指定してインスタンスを生成します
-        
+
         Args:
             history_path (str): 学習履歴のcsvのパス
 
@@ -102,7 +102,7 @@ class learning_history:
     def of_metric(self, metric: str) -> pd.DataFrame:
         """
         指定した評価値のデータフレームを返します。
-        
+
         Args:
             metric (str): 指定する評価値
 
