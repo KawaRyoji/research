@@ -3,7 +3,7 @@ from machine_learning.dataset import dataset
 from machine_learning.parameter import hyper_params
 from models.DA_Net import DA_Net
 from experiments.features.waveform import construct_process
-from keras import callbacks
+from tensorflow.keras.callbacks import EarlyStopping
 
 train_data_dir = "./resource/musicnet16k/train_data"
 train_label_dir = "./resource/musicnet16k/train_labels"
@@ -33,7 +33,7 @@ ex = ho_experiment(
     params=params,
     experimental_result_dir=experimental_result_dir,
 )
-es_callback = callbacks.EarlyStopping(patience=5)
+es_callback = EarlyStopping(patience=5)
 
 ex.prepare_dataset(normalize=False)
 ex.train(

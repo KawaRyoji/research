@@ -6,7 +6,7 @@ from musicnet.annotation import dataset_label
 from librosa.filters import mel
 from util.calc import square
 
-def construct_process(self, data_path: str, label_path: str) -> tuple:
+def construct_process(data_path: str, label_path: str) -> tuple:
     sampling_freq = 16000
     fft_len = 2048  # 分解能 8Hz
     flen = 1024  # 時間長 64ms

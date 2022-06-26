@@ -65,7 +65,7 @@ train_label_dir = "./resource/musicnet16k/train_labels"
 test_data_dir = "./resource/musicnet16k/test_data"
 test_label_dir = "./resource/musicnet16k/test_labels"
 
-experimental_result_dir = "./experimental_results/transformer_waveform_mono"
+experimental_result_dir = "./experimental_results/transformer_waveform_poly"
 params = hyper_params(32, 32, epoch_size=500, learning_rate=0.0001)
 
 train_set = dataset.from_dir(train_data_dir, train_label_dir, construct_process)
