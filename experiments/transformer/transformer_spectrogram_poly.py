@@ -1,6 +1,6 @@
 import os
 
-from experiments.features.waveform_image import construct_process
+from experiments.features.spectrogram import construct_process
 from experiments.ho_experiment import ho_experiment
 from machine_learning.dataset import dataset
 from machine_learning.parameter import hyper_params
@@ -15,7 +15,7 @@ test_label_dir = "./resource/musicnet16k/test_labels"
 predict_data_path = "./resource/musicnet16k/test_data/2556.wav"
 predict_label_path = "./resource/musicnet16k/test_labels/2556.csv"
 
-experimental_result_dir = "./experimental_results/transformer_waveform_poly"
+experimental_result_dir = "./experimental_results/transformer_spectrogram_poly"
 
 train_set = dataset.from_dir(
     train_data_dir,

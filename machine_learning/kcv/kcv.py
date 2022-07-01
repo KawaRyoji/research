@@ -2,6 +2,7 @@ import os
 import tensorflow.keras.backend as K
 import numpy as np
 import pandas as pd
+from machine_learning.kcv.kcv_data_sequence import kcv_data_sequence
 from machine_learning.model import learning_model
 from machine_learning.kcv.kcv_result import kcv_result
 from machine_learning.learning_history import learning_history
@@ -55,8 +56,16 @@ class kcv:
         """
         self.params.save_to_json(os.path.join(self.result.results_dir, "params.json"))
 
-        fold_size = len(x) // self.k
-        for fold in range(self.k):
+        sequence = kcv_data_sequence(
+            x,
+            y,
+            self.k,
+            self.params.batch_size,
+            batches_per_epoch=self.params.epoch_size,
+            valid_size=valid_size,
+        )
+
+        for fold, train_seq, valid_data in sequence.generate():
             model = self.model.create_model()
 
             if not model._is_compiled:
@@ -89,33 +98,11 @@ class kcv:
             callbacks_f.append(cp_callback)
             callbacks_f.append(lg_callback)
 
-            split_s = fold * fold_size
-            split_e = split_s + fold_size
-            mask = np.ones(len(x), dtype=bool)
-            mask[split_s:split_e] = False
-            x_valid = x[split_s:split_e]
-            y_valid = y[split_s:split_e]
-            # NOTE: メモリをバカ食いする
-            x_train = x[mask]
-            y_train = y[mask]
-
-            del mask
-            sequence = data_sequence(
-                x_train,
-                y_train,
-                self.params.batch_size,
-                batches_per_epoch=self.params.epoch_size,
-            )
-
-            if valid_size is not None:
-                x_valid = x_valid[:valid_size]
-                y_valid = y_valid[:valid_size]
-
             model.fit(
-                x=sequence,
+                x=train_seq,
                 epochs=self.params.epochs,
                 callbacks=callbacks_f,
-                validation_data=(x_valid, y_valid),
+                validation_data=valid_data,
             )
 
     def test(self, x: np.ndarray, y: np.ndarray):

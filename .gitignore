@@ -4,4 +4,6 @@ experimental_results/*/test.npz
 experimental_results/*/*/figures/figure*
 resource/*
 nohup.out
-*.ckpt
+*.ckpt*
+checkpoint
+.vscode/**

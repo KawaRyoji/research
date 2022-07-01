@@ -1,5 +1,5 @@
 import os
-from typing import List
+from typing import List, Tuple
 
 import machine_learning.plot as plot
 import numpy as np
@@ -67,6 +67,18 @@ class ho_experiment:
 
         self.model.test(x, y)
 
+    def predict(
+        self, data_path: str, label_path: str, normalize=False, **kwargs
+    ) -> Tuple[np.ndarray, np.ndarray]:
+        x, y = self.train_set._construct_process(data_path, label_path, **kwargs)
+
+        if normalize:
+            x = dataset.normalize_data(x)
+
+        prediction = self.model.predict(x, self.results.model_weight_path)
+
+        return prediction, y
+
     def plot_prediction(
         self,
         data_path: str,
@@ -75,13 +87,10 @@ class ho_experiment:
         threshold: float = None,
         **kwargs
     ):
-        x, y = self.train_set._construct_process(data_path, label_path, **kwargs)
+        prediction, y = self.predict(
+            data_path, label_path, normalize=normalize, **kwargs
+        )
         basename = os.path.basename(data_path)
-
-        if normalize:
-            x = dataset.normalize_data(x)
-
-        prediction = self.model.predict(x, self.results.model_weight_path)
 
         plot.plot_activation_with_labels(
             y,
@@ -105,6 +114,22 @@ class ho_experiment:
                 "predict_" + basename + "_th{:.2f}.png".format(threshold),
             ),
         )
+
+    def plot_concat_prediction(
+        self,
+        prediction: np.ndarray,
+        labels: np.ndarray,
+        path: np.ndarray,
+        threshold: float = None,
+    ):
+        prediction = np.concatenate(prediction)
+        labels = np.concatenate(labels)
+        print(prediction.shape)
+        print(labels.shape)        
+        if threshold is not None:
+            prediction = np.where(prediction < threshold, 0, 1)
+
+        plot.plot_activation_with_labels(labels, prediction, path)
 
     def plot_result(self):
         history = learning_history.from_path(self.results.history_path)

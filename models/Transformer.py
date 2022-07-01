@@ -2,7 +2,8 @@ import tensorflow as tf
 
 from tensorflow.keras.metrics import BinaryAccuracy, Precision, Recall
 from tensorflow.keras import Model
-from tensorflow.keras.layers import Input, Lambda, Dense
+from tensorflow.keras.optimizers.schedules import LearningRateSchedule
+from tensorflow.keras.layers import Input, Lambda, Dense, Layer
 from tensorflow.keras.optimizers import Adam
 from machine_learning.metrics import F1
 from machine_learning.model import learning_model
@@ -20,6 +21,9 @@ class Transformer(learning_model):
         num_layer: int = 6,
         num_head: int = 8,
         dropout_rate: float = 0.1,
+        max_learning_rate: float = 0.0001,
+        warmup_step: int = 4000,
+        decoder: Layer = None
     ) -> None:
         self.data_length = data_length
         self.encoder_input_dim = encoder_input_dim
@@ -29,7 +33,13 @@ class Transformer(learning_model):
         self.num_layer = num_layer
         self.num_head = num_head
         self.dropout_rate = dropout_rate
-
+        self.max_learning_rate = max_learning_rate
+        self.warmup_step = warmup_step
+        if decoder is None:
+            self.decoder = Dense(output_dim, activation="sigmoid")
+        else:
+            self.decoder = decoder
+        
     def create_model(self) -> Model:
         input = Input(
             shape=(
@@ -48,14 +58,16 @@ class Transformer(learning_model):
             self.dropout_rate,
         )(input, mask=mask)
 
-        output = Dense(self.output_dim, activation="sigmoid")(
-            enc_output
-        )
+        output = self.decoder(enc_output)
 
         model = Model(inputs=input, outputs=output)
 
+        scheduler = TransformerLearningRateScheduler(
+            max_learning_rate=self.max_learning_rate, warmup_step=self.warmup_step
+        )
+
         model.compile(
-            optimizer=Adam(),
+            optimizer=Adam(learning_rate=scheduler, beta_2=0.98),
             loss="binary_crossentropy",
             metrics=[
                 BinaryAccuracy(),
@@ -73,3 +85,16 @@ class Transformer(learning_model):
 
         array = tf.zeros([batch_size, length], dtype=tf.bool)
         return tf.reshape(array, [batch_size, 1, 1, length])
+
+
+class TransformerLearningRateScheduler(LearningRateSchedule):
+    def __init__(self, max_learning_rate=0.0001, warmup_step=4000) -> None:
+        self.max_learning_rate = max_learning_rate
+        self.warmup_step = warmup_step
+
+    def __call__(self, step) -> float:
+        rate = (
+            tf.minimum(step ** -0.5, step * self.warmup_step ** -1.5)
+            / self.warmup_step ** -0.5
+        )
+        return self.max_learning_rate * rate

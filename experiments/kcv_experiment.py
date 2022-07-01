@@ -1,4 +1,5 @@
 import os
+from typing import Tuple
 
 import machine_learning.plot as plot
 import numpy as np
@@ -89,6 +90,23 @@ class kcv_experiment:
             metrics=["precision", "recall", "F1"],
         )
 
+    def predict(
+        self,
+        data_path: str,
+        label_path: str,
+        model_weight_path: str,
+        normalize=False,
+        **kwargs
+    ) -> Tuple[np.ndarray, np.ndarray]:
+        x, y = self.train_set._construct_process(data_path, label_path, **kwargs)
+
+        if normalize:
+            x = dataset.normalize_data(x)
+
+        prediction = self.model.predict(x, model_weight_path)
+
+        return prediction, y
+
     def plot_prediction(
         self,
         data_path: str,
@@ -104,11 +122,9 @@ class kcv_experiment:
         )
         basename = os.path.basename(data_path)
 
-        x, y = self.train_set._construct_process(data_path, label_path, **kwargs)
-        if normalize:
-            x = dataset.normalize_data(x)
-
-        prediction = self.model.predict(x, model_weight_path)
+        prediction, y = self.predict(
+            data_path, label_path, model_weight_path, normalize=normalize, **kwargs
+        )
 
         plot.plot_activation_with_labels(
             y,
@@ -129,3 +145,19 @@ class kcv_experiment:
                 "predict_" + basename + "_th{:.2f}.png".format(threshold),
             ),
         )
+
+    def plot_concat_prediction(
+        self,
+        prediction: np.ndarray,
+        labels: np.ndarray,
+        path: np.ndarray,
+        threshold: float = None,
+    ):
+        prediction = np.concatenate(prediction)
+        labels = np.concatenate(labels)
+        print(prediction.shape)
+        print(labels.shape)
+        if threshold is not None:
+            prediction = np.where(prediction < threshold, 0, 1)
+
+        plot.plot_activation_with_labels(labels, prediction, path)

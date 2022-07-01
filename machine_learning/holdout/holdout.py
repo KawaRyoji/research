@@ -36,7 +36,7 @@ class holdout:
             print("Model should be compiled.")
             return
 
-        K.set_value(model.optimizer.lr, self.params.learning_rate)
+        # K.set_value(model.optimizer.lr, self.params.learning_rate)
 
         train_x, train_y, valid_x, valid_y = dataset.split_data(x, y, valid_split)
         self.params.save_to_json(os.path.join(self.result.results_dir, "params.json"))

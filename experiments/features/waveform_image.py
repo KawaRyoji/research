@@ -32,6 +32,5 @@ def construct_process(
             hotvectors[i].append(hotvector)
 
     frames = np.array(frames, dtype=np.float32)
-    # TODO: パディングすることを検討
     hotvectors = np.array(hotvectors, dtype=np.float32)
     return frames, hotvectors
