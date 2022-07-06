@@ -21,9 +21,8 @@ class Transformer(learning_model):
         num_layer: int = 6,
         num_head: int = 8,
         dropout_rate: float = 0.1,
-        max_learning_rate: float = 0.0001,
         warmup_step: int = 4000,
-        decoder: Layer = None
+        decoder: Layer = None,
     ) -> None:
         self.data_length = data_length
         self.encoder_input_dim = encoder_input_dim
@@ -33,13 +32,12 @@ class Transformer(learning_model):
         self.num_layer = num_layer
         self.num_head = num_head
         self.dropout_rate = dropout_rate
-        self.max_learning_rate = max_learning_rate
         self.warmup_step = warmup_step
         if decoder is None:
             self.decoder = Dense(output_dim, activation="sigmoid")
         else:
             self.decoder = decoder
-        
+
     def create_model(self) -> Model:
         input = Input(
             shape=(
@@ -63,7 +61,7 @@ class Transformer(learning_model):
         model = Model(inputs=input, outputs=output)
 
         scheduler = TransformerLearningRateScheduler(
-            max_learning_rate=self.max_learning_rate, warmup_step=self.warmup_step
+            d_model=self.hidden_dim, warmup_step=self.warmup_step
         )
 
         model.compile(
@@ -88,13 +86,11 @@ class Transformer(learning_model):
 
 
 class TransformerLearningRateScheduler(LearningRateSchedule):
-    def __init__(self, max_learning_rate=0.0001, warmup_step=4000) -> None:
-        self.max_learning_rate = max_learning_rate
+    def __init__(self, d_model, warmup_step=4000) -> None:
+        self.d_model = d_model
         self.warmup_step = warmup_step
 
     def __call__(self, step) -> float:
-        rate = (
-            tf.minimum(step ** -0.5, step * self.warmup_step ** -1.5)
-            / self.warmup_step ** -0.5
-        )
-        return self.max_learning_rate * rate
+        rate = tf.minimum(step ** -0.5, step * self.warmup_step ** -1.5)
+        d_model = tf.cast(self.d_model, tf.float32)
+        return rate / tf.sqrt(d_model)

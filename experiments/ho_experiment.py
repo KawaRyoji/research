@@ -124,8 +124,6 @@ class ho_experiment:
     ):
         prediction = np.concatenate(prediction)
         labels = np.concatenate(labels)
-        print(prediction.shape)
-        print(labels.shape)        
         if threshold is not None:
             prediction = np.where(prediction < threshold, 0, 1)
 

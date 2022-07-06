@@ -33,6 +33,7 @@ params = hyper_params(32, 1000, epoch_size=500, learning_rate=0.0001)
 flen = 1024
 time_len = 32
 threshold = 0.5
+normalize = True
 
 model = Transformer(data_length=time_len)
 ex = ho_experiment(
@@ -45,7 +46,7 @@ ex = ho_experiment(
 
 es_callback = EarlyStopping(patience=5)
 
-ex.prepare_dataset(normalize=False, flen=flen, time_len=time_len)
+ex.prepare_dataset(normalize=normalize, flen=flen, time_len=time_len)
 ex.train(
     callbacks=[es_callback], valid_limit=params.batch_size * params.epoch_size // 4
 )
@@ -56,6 +57,7 @@ prediction, labels = ex.predict(
     predict_label_path,
     flen=flen,
     time_len=time_len,
+    normalize=normalize
 )
 
 ex.plot_concat_prediction(

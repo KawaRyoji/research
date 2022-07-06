@@ -80,23 +80,9 @@ class dataset:
             print(file_name + ".npz", "is already exists")
             return
 
-        if limit is not None:
-            assert limit >= 1
-
-            limit = min(limit, len(self.data_paths))
-
-            if seed is None:
-                seed = np.random.randint(np.iinfo(np.int32).max)
-
-            np.random.seed(seed)
-            index = np.random.permutation(len(self.data_paths))
-            data_paths = self.data_paths[index]
-            label_paths = self.label_paths[index]
-            data_paths = data_paths[:limit]
-            label_paths = label_paths[:limit]
-        else:
-            data_paths = self.data_paths
-            label_paths = self.label_paths
+        data_paths, label_paths = dataset.limit_data(
+            self.data_paths, self.label_paths, limit=limit, seed=seed
+        )
 
         print("start construction")
         Path.mkdir(Path(file_name).parent, parents=True, exist_ok=True)
@@ -116,10 +102,6 @@ class dataset:
         # 標準化処理
         if normalize:
             data_list = dataset.normalize_data(data_list)
-            # 0割のデータを除外する
-            idx = ~np.all(data_list == 0, axis=1)
-            data_list = data_list[idx]
-            label_list = label_list[idx]
 
         np.savez(file_name, x=data_list, y=label_list)
         print(
@@ -148,6 +130,35 @@ class dataset:
             dataset.shuffle_data(x, y)
 
         return x, y
+
+    @classmethod
+    def limit_data(
+        cls,
+        data_paths: np.ndarray,
+        label_paths: np.ndarray,
+        limit: int = None,
+        seed=None,
+    ) -> Tuple[np.ndarray, np.ndarray]:
+        if limit is not None:
+            if limit <= 0:
+                return data_paths, label_paths
+
+            limit = min(limit, len(data_paths))
+
+            if seed is None:
+                seed = np.random.randint(np.iinfo(np.int32).max)
+
+            np.random.seed(seed)
+            index = np.random.permutation(len(data_paths))
+            data_paths = data_paths[index]
+            label_paths = label_paths[index]
+            data_paths = data_paths[:limit]
+            label_paths = label_paths[:limit]
+        else:
+            data_paths = data_paths
+            label_paths = label_paths
+
+        return data_paths, label_paths
 
     @classmethod
     def split_data(

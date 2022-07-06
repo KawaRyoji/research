@@ -15,7 +15,7 @@ test_label_dir = "./resource/musicnet16k/test_labels"
 predict_data_path = "./resource/musicnet16k/test_data/2556.wav"
 predict_label_path = "./resource/musicnet16k/test_labels/2556.csv"
 
-experimental_result_dir = "./experimental_results/transformer_spectrogram_poly"
+experimental_result_dir = "./experimental_results/transformer_spectrogram_w2048_norm_poly"
 
 train_set = dataset.from_dir(
     train_data_dir,
@@ -30,10 +30,10 @@ test_set = dataset.from_dir(
 )
 
 params = hyper_params(32, 1000, epoch_size=500, learning_rate=0.0001)
-flen = 1024
+flen = 2048
 time_len = 32
 threshold = 0.5
-normalize = True
+normalize = False
 
 model = Transformer(data_length=time_len)
 ex = ho_experiment(
@@ -57,7 +57,7 @@ prediction, labels = ex.predict(
     predict_label_path,
     flen=flen,
     time_len=time_len,
-    normalize=normalize
+    normalize=False,
 )
 
 ex.plot_concat_prediction(

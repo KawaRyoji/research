@@ -81,3 +81,13 @@ logspec_test_nolimit = learning_history.from_path(
 )
 
 
+metrics=["precision", "recall", "F1"]
+
+cplt.plot_histories(
+    "./comparison_results/crepe_nolimit",
+    waveform_nolimit,
+    spec_nolimit,
+    logspec_nolimit,
+    metrics=metrics,
+    legend=["waveform", "spectrum", "log spectrum"]
+)
