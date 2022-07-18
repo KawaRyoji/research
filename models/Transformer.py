@@ -33,10 +33,7 @@ class Transformer(learning_model):
         self.num_head = num_head
         self.dropout_rate = dropout_rate
         self.warmup_step = warmup_step
-        if decoder is None:
-            self.decoder = Dense(output_dim, activation="sigmoid")
-        else:
-            self.decoder = decoder
+        self.decoder = decoder
 
     def create_model(self) -> Model:
         input = Input(
@@ -48,7 +45,7 @@ class Transformer(learning_model):
 
         mask = Lambda(self._create_enc_self_attention_mask)(input)
 
-        enc_output = Encoder(
+        y = Encoder(
             self.hidden_dim,
             self.num_layer,
             self.num_head,
@@ -56,14 +53,15 @@ class Transformer(learning_model):
             self.dropout_rate,
         )(input, mask=mask)
 
-        output = self.decoder(enc_output)
-
+        if self.decoder is not None:
+            y = self.decoder(y)
+            
+        output = Dense(self.output_dim, activation="sigmoid")(y)
+        
         model = Model(inputs=input, outputs=output)
 
-        scheduler = TransformerLearningRateScheduler(
-            d_model=self.hidden_dim, warmup_step=self.warmup_step
-        )
-
+        scheduler = TransformerLearningRateScheduler()
+        
         model.compile(
             optimizer=Adam(learning_rate=scheduler, beta_2=0.98),
             loss="binary_crossentropy",
@@ -86,11 +84,10 @@ class Transformer(learning_model):
 
 
 class TransformerLearningRateScheduler(LearningRateSchedule):
-    def __init__(self, d_model, warmup_step=4000) -> None:
-        self.d_model = d_model
+    def __init__(self, max_learning_rate=0.0001, warmup_step=4000) -> None:
+        self.max_learning_rate = max_learning_rate
         self.warmup_step = warmup_step
 
     def __call__(self, step) -> float:
-        rate = tf.minimum(step ** -0.5, step * self.warmup_step ** -1.5)
-        d_model = tf.cast(self.d_model, tf.float32)
-        return rate / tf.sqrt(d_model)
+        rate = tf.minimum(step ** -0.5, step * self.warmup_step ** -1.5) / self.warmup_step ** -0.5
+        return self.max_learning_rate * rate

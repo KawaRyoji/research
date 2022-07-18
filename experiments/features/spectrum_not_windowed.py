@@ -1,14 +1,14 @@
+from typing import Tuple
 import numpy as np
 from scipy.fft import fft
 
 from audio.wavfile import wavfile
 from musicnet.annotation import dataset_label
 
-def construct_process(data_path: str, label_path: str) -> tuple:
 
-    fft_len = 2048  # 分解能 8Hz
-    flen = 1024  # 時間長 64ms  周波数分解能 15.625 Hz
-    fshift = 256  # 時間長 16ms
+def construct_process(
+    data_path: str, label_path: str, fft_len=2048, flen=1024, fshift=256
+) -> Tuple[np.ndarray, np.ndarray]:
     waveform = wavfile.read(data_path)
     labels = dataset_label.load(label_path)
     waveform = waveform.data
@@ -24,9 +24,6 @@ def construct_process(data_path: str, label_path: str) -> tuple:
 
         label = labels.frame_mid_pitches(fstart - pad, fend - pad)
         hotvector = dataset_label.list2hotvector(label)
-        tup = np.where(hotvector is 1.0)
-        if len(tup) > 1:
-            continue
 
         frame = waveform[fstart:fend]
         frame = np.abs(fft(frame, n=fft_len))

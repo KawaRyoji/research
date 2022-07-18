@@ -1,6 +1,6 @@
 **/__pycache__/
-experimental_results/*/train.npz
-experimental_results/*/test.npz
+**/train.npz
+**/test.npz
 experimental_results/*/*/figures/figure*
 resource/*
 nohup.out
