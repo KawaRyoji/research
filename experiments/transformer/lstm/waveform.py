@@ -20,4 +20,4 @@ decoder.reset_states()
 experiment = TransformerExperiment(
     root_dir, feature_name, params, normalize=True, decoder=decoder
 )
-# experiment.run()
+experiment.run()
